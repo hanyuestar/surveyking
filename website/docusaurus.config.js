@@ -1,7 +1,7 @@
 module.exports = {
   title: "SurveyKing - 更好的调查问卷系统",
   tagline: "更强大的调查问卷系统, 后端完全开源。",
-  url: "https://surveyking.cn",
+  url: "https://hanyuestar.github.io",
   baseUrl: "/",
   onBrokenLinks: "throw",
   onBrokenMarkdownLinks: "warn",
@@ -41,9 +41,9 @@ module.exports = {
   ],
   themeConfig: {
     announcementBar: {
-      id: "new_version_rc.2",
+      id: "new_version_1.0.0",
       content:
-        '版本 v1.6.0 已发布! 🎉 点击 <a target="_blank" rel="noopener noreferrer" href="/docs/quickstart">quickstart</a> 开始吧!  Q群(1074277968)',
+        '版本 v1.0.0 已发布! 🎉 点击 <a target="_blank" rel="noopener noreferrer" href="/docs/quickstart">快速开始</a> 开始吧!',
       backgroundColor: "#FF5B79",
       textColor: "black",
       isCloseable: true,
@@ -71,33 +71,10 @@ module.exports = {
           position: "left",
         },
         {
-          to: "https://docs.qq.com/sheet/DZEVveUVMSHpVZkJw?",
-          label: "功能对比",
-          className:
-            "btn mr-2 px-6 py-2 text-white font-bold uppercase bg-red-600 hover:text-white hover:bg-red-700",
-          "aria-label": "Open the demo project",
-          position: "right",
-        },
-        // {
-        //   to: "https://s.surveyking.cn",
-        //   label: "演示",
-        //   className:
-        //     "btn mr-2 px-6 py-2 text-white font-bold uppercase bg-blue-600 hover:text-white hover:bg-blue-700",
-        //   "aria-label": "Open the demo project",
-        //   position: "right",
-        // },
-        {
           href: "https://github.com/javahuang/SurveyKing",
           // label: 'GitHub',
           className: "mr-2 header-github-link",
           "aria-label": "GitHub repository",
-          position: "right",
-        },
-        {
-          href: "https://gitee.com/surveyking/surveyking",
-          // label: 'Gitee',
-          className: "mr-2 header-gitee-link",
-          "aria-label": "Gitee repository",
           position: "right",
         },
       ],
@@ -121,14 +98,6 @@ module.exports = {
             {
               label: "文档",
               to: "docs/",
-            },
-            {
-              label: "演示",
-              to: "https://s.surveyking.cn",
-            },
-            {
-              label: "豫ICP备2021025098号-1",
-              to: "https://beian.miit.gov.cn/",
             },
           ],
         },
@@ -155,16 +124,7 @@ module.exports = {
         theme: {
           customCss: [require.resolve("./src/css/custom.css")],
         },
-        gtag: {
-          trackingID: "G-D4DQQCW88S",
-        },
       },
     ],
-  ],
-  scripts: [
-    {
-      src: "https://hm.baidu.com/hm.js?43e89c38a9e9332e702161a0c19bba11",
-      async: true,
-    },
   ],
 };

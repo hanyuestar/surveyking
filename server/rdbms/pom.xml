@@ -58,5 +58,27 @@
             <artifactId>shared</artifactId>
             <version>${revision}</version>
         </dependency>
+        <!-- 嵌入式 H2 数据库：H2 profile（java -jar surveyking-v1.0.0.jar 默认体验模式）使用 -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <version>2.1.214</version>
+            <scope>runtime</scope>
+        </dependency>
     </dependencies>
+
+    <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <excludes>
+                    <!-- H2 profile 依赖 classpath:scripts/init-h2.sql 与
+                         classpath:scripts/data-region-dict.sql.gz（RegionDictH2Initializer 启动时解压导入），
+                         因此 scripts/** 必须打入 jar（zip 压缩后体积可接受）。
+                         仅排除 MySQL 初始化脚本的重复引用（MySQL compose 通过挂载宿主文件执行，无需进 jar）。 -->
+                    <exclude>scripts/init-mysql.sql</exclude>
+                </excludes>
+            </resource>
+        </resources>
+    </build>
 </project>

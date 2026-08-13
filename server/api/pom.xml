@@ -78,5 +78,11 @@
                 <activeProfile>pro</activeProfile>
             </properties>
         </profile>
+        <profile>
+            <id>h2</id>
+            <properties>
+                <activeProfile>h2</activeProfile>
+            </properties>
+        </profile>
     </profiles>
 </project>

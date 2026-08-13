@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: http://surveyking.cn/sitemap.xml
+Sitemap: https://hanyuestar.github.io/sitemap.xml

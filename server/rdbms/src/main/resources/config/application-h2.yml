@@ -1,0 +1,25 @@
+# H2 嵌入式模式配置（java -jar surveyking-v1.0.0.jar 默认体验模式，免安装数据库）
+# 对应官方 v1.12.0 的 config/application-h2.yml；本地 v1.9.0 结构为 rdbms 模块 config 目录。
+# 说明：sql.init.mode=always 会在每次启动时执行 classpath:scripts/init-h2.sql（建表 + 种子数据，幂等）；
+#       行政区字典（region）大数据不并入 init-h2.sql，由 RegionDictH2Initializer 启动时检查存在性、只导入一次。
+spring:
+  h2:
+    console:
+      enabled: false
+  datasource:
+    username: sa
+    password: sa
+    url: jdbc:h2:./db/surveyking;MODE=MySQL;NON_KEYWORDS=USER
+    driver-class-name: org.h2.Driver
+  sql:
+    init:
+      continue-on-error: true
+      mode: always
+      schema-locations: classpath:scripts/init-h2.sql
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl
+    call-setters-on-nulls: false
+  global-config:
+    db-config:
+      logic-delete-field: deleted

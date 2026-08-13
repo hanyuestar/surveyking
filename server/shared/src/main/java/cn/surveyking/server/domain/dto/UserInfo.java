@@ -62,6 +62,9 @@ public class UserInfo implements UserDetails, Serializable {
 
 	private Integer correctTimes;
 
+	/** token 版本号，密码重置后自增使旧 token 失效 */
+	private Integer tokenVersion;
+
 	public UserInfo() {
 	}
 

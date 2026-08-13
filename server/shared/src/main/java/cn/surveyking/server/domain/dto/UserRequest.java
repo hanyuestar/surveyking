@@ -3,6 +3,7 @@ package cn.surveyking.server.domain.dto;
 import lombok.Data;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.validation.constraints.NotBlank;
 import java.util.List;
 
 /**
@@ -11,6 +12,12 @@ import java.util.List;
  */
 @Data
 public class UserRequest {
+
+	/**
+	 * 创建用户场景的校验分组（更新场景可不传密码/用户名，故不加入默认组）
+	 */
+	public interface Create {
+	}
 
 	private String id;
 
@@ -23,9 +30,11 @@ public class UserRequest {
 	private String profile;
 
 	/** 登录账号 */
+	@NotBlank(message = "用户名不能为空", groups = Create.class)
 	private String username;
 
 	/** 密码 */
+	@NotBlank(message = "密码不能为空", groups = Create.class)
 	private String password;
 
 	/** 密码修改原密码 */

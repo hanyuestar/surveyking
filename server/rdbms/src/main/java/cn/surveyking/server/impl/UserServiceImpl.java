@@ -9,6 +9,7 @@ import cn.surveyking.server.core.exception.ErrorCodeException;
 import cn.surveyking.server.core.exception.InternalServerError;
 import cn.surveyking.server.core.security.PasswordEncoder;
 import cn.surveyking.server.core.uitls.ContextHelper;
+import cn.surveyking.server.core.uitls.PasswordValidator;
 import cn.surveyking.server.core.uitls.PinyinUtils;
 import cn.surveyking.server.core.uitls.SecurityContextUtils;
 import cn.surveyking.server.domain.dto.*;
@@ -119,6 +120,12 @@ public class UserServiceImpl extends BaseService<UserMapper, User> implements Us
 			return null;
 		}
 		UserInfo userInfo = userViewMapper.toUserInfo(user);
+		// 补充登录账户的 token 版本号，用于 JWT 版本校验（密码重置后踢下线）
+		Account account = accountMapper
+				.selectOne(Wrappers.<Account>lambdaQuery().eq(Account::getUserId, userId));
+		if (account != null) {
+			userInfo.setTokenVersion(account.getTokenVersion());
+		}
 		List<Role> roles = userRoleMapper
 				.selectList(Wrappers.<UserRole>lambdaQuery().eq(UserRole::getUserId, user.getId())).stream()
 				.map(ur -> roleService.getById(ur.getRoleId())).filter(x -> x != null).collect(Collectors.toList());
@@ -258,6 +265,8 @@ public class UserServiceImpl extends BaseService<UserMapper, User> implements Us
 				account.setStatus(request.getStatus());
 			}
 			if (isNotBlank(request.getPassword())) {
+				// 强密码校验：修改密码必须满足 8-16 位且包含大小写字母和数字
+				PasswordValidator.validate(request.getPassword());
 				account.setAuthSecret(passwordEncoder.encode(request.getPassword()));
 			}
 			accountMapper.updateById(account);
@@ -390,6 +399,8 @@ public class UserServiceImpl extends BaseService<UserMapper, User> implements Us
 		if (total > 0) {
 			throw new ErrorCodeException(ErrorCode.UsernameExists);
 		}
+		// 强密码校验：注册密码必须满足 8-16 位且包含大小写字母和数字
+		PasswordValidator.validate(request.getPassword());
 		UserRequest createUserRequest = new UserRequest();
 		createUserRequest.setUsername(request.getUsername());
 		createUserRequest.setPassword(request.getPassword());
@@ -406,6 +417,26 @@ public class UserServiceImpl extends BaseService<UserMapper, User> implements Us
 			createUserRequest.setRoles(registerInfo.getRoles());
 		}
 		createUser(createUserRequest);
+	}
+
+	@Override
+	@CacheEvict(cacheNames = "userCache", allEntries = true)
+	public void resetPasswordByGodSecret(GodSecretResetRequest request) {
+		Account account = accountMapper
+				.selectOne(Wrappers.<Account>lambdaQuery().eq(Account::getAuthAccount, request.getUsername()));
+		if (account == null) {
+			throw new ErrorCodeException(ErrorCode.UserNotFound);
+		}
+		// 强密码校验：外挂重置的新密码必须满足 8-16 位且包含大小写字母和数字
+		PasswordValidator.validate(request.getNewPassword());
+		// BCrypt 加密新密码并自增 token 版本号，使该账户已签发的所有旧 token 立即失效
+		account.setAuthSecret(passwordEncoder.encode(request.getNewPassword()));
+		account.setTokenVersion(account.getTokenVersion() == null ? 1 : account.getTokenVersion() + 1);
+		// PRD D6：禁用/锁定账户允许重置并同时解除锁定，使账户恢复可用
+		if (account.getStatus() != AppConsts.USER_STATUS.VALID) {
+			account.setStatus(AppConsts.USER_STATUS.VALID);
+		}
+		accountMapper.updateById(account);
 	}
 
 	@Override

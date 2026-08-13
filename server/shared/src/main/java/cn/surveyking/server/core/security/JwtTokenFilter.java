@@ -3,6 +3,8 @@ package cn.surveyking.server.core.security;
 import cn.surveyking.server.core.config.WebSecurityConfig;
 import cn.surveyking.server.core.constant.AppConsts;
 import cn.surveyking.server.core.uitls.ContextHelper;
+import cn.surveyking.server.domain.dto.UserInfo;
+import cn.surveyking.server.domain.dto.UserTokenView;
 import cn.surveyking.server.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -21,6 +23,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Objects;
 
 import static java.util.Optional.ofNullable;
 import static org.apache.commons.lang3.StringUtils.isBlank;
@@ -62,7 +65,18 @@ public class JwtTokenFilter extends OncePerRequestFilter {
 
 		try {
 			// Get user identity and set it on the spring security context
-			UserDetails userDetails = userService.loadUserById(jwtTokenUtil.getUser(token).getUserId());
+			UserTokenView tokenUser = jwtTokenUtil.getUser(token);
+			UserDetails userDetails = userService.loadUserById(tokenUser.getUserId());
+
+			// token 版本号校验：密码被外挂重置后 tokenVersion+1，旧 token 全部失效
+			if (userDetails instanceof UserInfo) {
+				Integer claimTv = jwtTokenUtil.getTokenVersion(token);
+				Integer currentTv = ((UserInfo) userDetails).getTokenVersion();
+				if (!Objects.equals(claimTv == null ? 0 : claimTv, currentTv == null ? 0 : currentTv)) {
+					throw new AuthenticationException("token 已失效，请重新登录") {
+					};
+				}
+			}
 
 			UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails,
 					null, ofNullable(userDetails).map(UserDetails::getAuthorities).orElse(new ArrayList<>()));

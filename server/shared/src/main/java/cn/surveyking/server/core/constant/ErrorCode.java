@@ -112,7 +112,16 @@ public enum ErrorCode {
 	/**
 	 * 公开查询答案更新失败
 	 */
-	QueryResultUpdateError(7020, "答案更新失败"),;
+	QueryResultUpdateError(7020, "答案更新失败"),
+
+	/**
+	 * 外挂密码错误
+	 */
+	GodSecretError(1030, "外挂密码错误"),
+	/**
+	 * 用户名不存在
+	 */
+	UserNotFound(1031, "用户名不存在"),;
 
 	/**
 	 * 前两位区分模块，后两位区分错误消息

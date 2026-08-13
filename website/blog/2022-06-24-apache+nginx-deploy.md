@@ -9,7 +9,7 @@ author: axty
 
 :::tip
 
-卷王的 [演示环境](https://s.surveyking.cn) 就是采用 nginx 前后端分离的方式部署。
+卷王的 [演示环境](https://hanyuestar.github.io) 就是采用 nginx 前后端分离的方式部署。
 
 本方法主要使 卷王 与 apache 服务器所运行的项目共存。
 
@@ -39,9 +39,9 @@ nginx -s reload #lnmp nginx restart
 ```nginx
    server {
         listen      443 ssl;
-        server_name  www.surveyking.cn surveyking.cn;
-        ssl_certificate /usr/local/nginx/conf/ssl/surveyking.cn.cer; # ssl 配置
-        ssl_certificate_key /usr/local/nginx/conf/ssl/surveyking.cn.key;
+        server_name  example.com www.example.com;
+        ssl_certificate /usr/local/nginx/conf/ssl/example.com.cer; # ssl 配置
+        ssl_certificate_key /usr/local/nginx/conf/ssl/example.com.key;
         ssl_session_timeout 5m;
         ssl_ciphers ECDHE-RSA-AES128-GCM-SHA256:ECDHE:ECDH:AES:HIGH:!NULL:!aNULL:!MD5:!ADH:!RC4;
         ssl_protocols TLSv1 TLSv1.1 TLSv1.2;

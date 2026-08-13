@@ -50,6 +50,11 @@ public class SystemInfo {
 
 	private Boolean aiEnabled;
 
+	/**
+	 * 是否启用外挂密码重置
+	 */
+	private Boolean isGodSecretEnabled;
+
 	@Data
 	public static class RegisterInfo {
 

@@ -3,6 +3,7 @@ package cn.surveyking.server.impl;
 import cn.surveyking.server.core.common.PaginationResponse;
 import cn.surveyking.server.core.constant.CacheConsts;
 import cn.surveyking.server.core.security.PreAuthorizeAnnotationExtractor;
+import cn.surveyking.server.core.uitls.GodSecretService;
 import cn.surveyking.server.core.uitls.RSAUtils;
 import cn.surveyking.server.domain.dto.*;
 import cn.surveyking.server.domain.mapper.RoleViewMapper;
@@ -45,10 +46,13 @@ public class SystemServiceImpl implements SystemService {
 
 	private final SysInfoMapper sysInfoMapper;
 
+	private final GodSecretService godSecretService;
+
 	@Override
 	public SystemInfo getSystemInfo() {
 		SystemInfo systemInfo = new SystemInfo();
 		systemInfo.setPublicKey(RSAUtils.DEFAULT_PUBLIC_KEY);
+		systemInfo.setIsGodSecretEnabled(godSecretService.isEnabled());
 
 		// 数据库只有一条记录，id为1
 		SysInfo info = sysInfoMapper.selectById("1");

@@ -13,10 +13,10 @@ public class RegisterRequest {
 
 	private String name;
 
-	@NotBlank
+	@NotBlank(message = "登录账号不能为空")
 	private String username;
 
-	@NotBlank
+	@NotBlank(message = "密码不能为空")
 	private String password;
 
 	private String role;

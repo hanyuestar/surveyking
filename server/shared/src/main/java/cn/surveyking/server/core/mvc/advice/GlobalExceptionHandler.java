@@ -50,7 +50,8 @@ public class GlobalExceptionHandler {
 			MissingServletRequestParameterException ex) {
 		log.error("handleMissingServletRequestParameterException {}\n", request.getRequestURI(), ex);
 
-		return ResponseEntity.ok().body(new ApiResponse<>(ResponseCode.FAIL.code, "Missing request parameter"));
+		return ResponseEntity.ok()
+				.body(new ApiResponse<>(ResponseCode.FAIL.code, "缺少必要参数：" + ex.getParameterName()));
 	}
 
 	@ExceptionHandler(MethodArgumentTypeMismatchException.class)
@@ -58,14 +59,19 @@ public class GlobalExceptionHandler {
 			HttpServletRequest request, MethodArgumentTypeMismatchException ex) {
 		log.error("handleMethodArgumentTypeMismatchException {}\n", request.getRequestURI(), ex);
 
-		return ResponseEntity.ok().body(new ApiResponse<>(ResponseCode.FAIL.code, "Method argument type mismatch"));
+		return ResponseEntity.ok()
+				.body(new ApiResponse<>(ResponseCode.FAIL.code, "参数类型不匹配：" + ex.getName()));
 	}
 
 	@ExceptionHandler(MethodArgumentNotValidException.class)
 	public ResponseEntity<ApiResponse<Map<String, String>>> handleMethodArgumentNotValidException(
 			HttpServletRequest request, MethodArgumentNotValidException ex) {
 		log.error("handleMethodArgumentNotValidException {}\n", request.getRequestURI(), ex);
-		return ResponseEntity.ok().body(new ApiResponse<>(ResponseCode.FAIL.code, "Method argument validation failed"));
+		// 优先透出字段注解上的中文 message（如「字典编码不能为空」），无则统一兜底
+		String message = ex.getBindingResult().getFieldErrors().stream().findFirst()
+				.map(fieldError -> fieldError.getDefaultMessage()).filter(msg -> msg != null && !msg.trim().isEmpty())
+				.orElse("参数校验失败");
+		return ResponseEntity.ok().body(new ApiResponse<>(ResponseCode.FAIL.code, message));
 	}
 
 	@ExceptionHandler(AccessDeniedException.class)
@@ -73,7 +79,12 @@ public class GlobalExceptionHandler {
 			AccessDeniedException ex) {
 		log.error("handleAccessDeniedException {}\n", request.getRequestURI());
 
-		return ResponseEntity.ok().body(new ApiResponse<>(ResponseCode.FORBIDDEN.code, "Authentication failed"));
+		// 业务侧（如账户禁用 UserServiceImpl）抛出的中文 message 直接透出，否则统一兜底
+		String message = "认证失败或没有权限";
+		if (ex.getMessage() != null && containsChinese(ex.getMessage())) {
+			message = ex.getMessage();
+		}
+		return ResponseEntity.ok().body(new ApiResponse<>(ResponseCode.FORBIDDEN.code, message));
 	}
 
 	@ExceptionHandler(ErrorCodeException.class)
@@ -90,6 +101,25 @@ public class GlobalExceptionHandler {
 		log.error("handleInternalServerError {}\n", request.getRequestURI(), ex);
 		return ResponseEntity.ok().body(new ApiResponse<>(ResponseCode.INTERNAL_SERVER_ERROR.code,
 				ex instanceof InternalServerError ? ex.getMessage() : "服务出了点问题"));
+	}
+
+	/**
+	 * 判断文本是否包含中文字符，用于区分业务侧中文 message 与 Spring Security 默认英文 message
+	 *
+	 * @param text
+	 * @return
+	 */
+	private boolean containsChinese(String text) {
+		if (text == null) {
+			return false;
+		}
+		for (int i = 0; i < text.length(); i++) {
+			char c = text.charAt(i);
+			if (c >= '\u4e00' && c <= '\u9fff') {
+				return true;
+			}
+		}
+		return false;
 	}
 
 }

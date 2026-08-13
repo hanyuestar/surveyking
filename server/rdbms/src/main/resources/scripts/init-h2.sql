@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS t_account (
     auth_secret varchar(64) DEFAULT NULL COMMENT '密码',
     secret_salt varchar(32) DEFAULT NULL COMMENT '加密盐',
     status int(11) NOT NULL DEFAULT '1' COMMENT '用户状态',
+    token_version int NOT NULL DEFAULT '0' COMMENT 'token版本号，重置密码后自增使旧token失效',
     is_deleted tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否删除',
     create_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     create_by varchar(256) DEFAULT NULL,
@@ -24,7 +25,7 @@ CREATE TABLE IF NOT EXISTS t_account (
 -- Records of t_account
 -- ----------------------------
 BEGIN;
-INSERT INTO t_account VALUES ('1457995482310680578', 'SysUser', '1457995481966747649', 'PWD', 'admin', '$2a$10$vZk9P3XtbD2KrdLbQYPvBuPAkkUda0OlkDg7io1Q6VEtfFPig/tqO', NULL, 1, 0, '2021-11-09 16:56:26', NULL, '2022-02-01 23:57:27', '1457995481966747649');
+INSERT INTO t_account VALUES ('1457995482310680578', 'SysUser', '1457995481966747649', 'PWD', 'admin', '$2a$10$vZk9P3XtbD2KrdLbQYPvBuPAkkUda0OlkDg7io1Q6VEtfFPig/tqO', NULL, 1, 0, 0, '2021-11-09 16:56:26', NULL, '2022-02-01 23:57:27', '1457995481966747649');
 COMMIT;
 
 -- ----------------------------
@@ -48,6 +49,54 @@ CREATE TABLE IF NOT EXISTS t_answer (
 
 -- ----------------------------
 -- Records of t_answer
+-- ----------------------------
+BEGIN;
+COMMIT;
+
+-- ----------------------------
+-- Table structure for t_comm_dict
+-- ----------------------------
+
+CREATE TABLE IF NOT EXISTS t_comm_dict (
+    id varchar(64)  NOT NULL,
+    code varchar(256)  DEFAULT NULL COMMENT '字典编码',
+    name varchar(256)  DEFAULT NULL COMMENT '字典中文名称',
+    remark varchar(256)  DEFAULT NULL COMMENT '备注信息',
+    dict_type int(11) DEFAULT '1' COMMENT '字典类型 1:问卷字典 2:系统字典',
+    create_at datetime DEFAULT NULL COMMENT '创建时间',
+    create_by varchar(256)  DEFAULT NULL,
+    update_at datetime DEFAULT NULL COMMENT '更新时间',
+    update_by varchar(256)  DEFAULT NULL,
+    PRIMARY KEY (id)
+    )  ;
+
+-- ----------------------------
+-- Records of t_comm_dict
+-- ----------------------------
+BEGIN;
+COMMIT;
+
+-- ----------------------------
+-- Table structure for t_comm_dict_item
+-- ----------------------------
+
+CREATE TABLE IF NOT EXISTS t_comm_dict_item (
+    id varchar(64)  NOT NULL,
+    dict_code varchar(256)  DEFAULT NULL COMMENT '字典编码',
+    item_name varchar(256)  DEFAULT NULL COMMENT '字典项中文名称',
+    item_value varchar(256)  NOT NULL COMMENT '字典项值',
+    item_order int(11) DEFAULT NULL COMMENT '字典顺序',
+    item_level int(11) DEFAULT NULL COMMENT '层级',
+    parent_item_value varchar(64)  DEFAULT NULL COMMENT '父字典项值',
+    create_at datetime DEFAULT NULL COMMENT '创建时间',
+    create_by varchar(256)  DEFAULT NULL,
+    update_at datetime DEFAULT NULL COMMENT '更新时间',
+    update_by varchar(256)  DEFAULT NULL,
+    PRIMARY KEY (id, item_value)
+    )  ;
+
+-- ----------------------------
+-- Records of t_comm_dict_item
 -- ----------------------------
 BEGIN;
 COMMIT;
@@ -364,6 +413,53 @@ BEGIN;
 COMMIT;
 
 -- ----------------------------
+-- Table structure for t_repo
+-- ----------------------------
+
+CREATE TABLE IF NOT EXISTS t_repo (
+    id varchar(64)  NOT NULL,
+    name varchar(64)  DEFAULT NULL COMMENT '标题',
+    description varchar(512)  DEFAULT NULL COMMENT '备注',
+    category varchar(64)  DEFAULT NULL COMMENT '题库分类',
+    mode varchar(32)  DEFAULT NULL COMMENT 'survey问卷 exam考试',
+    shared tinyint(1) DEFAULT '0' COMMENT '1共享 0私有',
+    tag varchar(512)  DEFAULT NULL COMMENT '标签',
+    priority int(11) DEFAULT NULL COMMENT '排序优先级',
+    setting text  COMMENT '设置',
+    create_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    create_by varchar(256)  DEFAULT NULL,
+    update_at timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    update_by varchar(256)  DEFAULT NULL,
+    is_practice tinyint(1) DEFAULT NULL COMMENT '添加到练习题库 1是 0否',
+    PRIMARY KEY (id)
+    )  ;
+
+-- ----------------------------
+-- Records of t_repo
+-- ----------------------------
+BEGIN;
+COMMIT;
+
+-- ----------------------------
+-- Table structure for t_repo_template
+-- ----------------------------
+
+CREATE TABLE IF NOT EXISTS t_repo_template (
+    id varchar(64)  NOT NULL,
+    template_id varchar(64)  DEFAULT NULL COMMENT '模板id',
+    repo_id varchar(64)  DEFAULT NULL COMMENT '模板库id',
+    create_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    create_by varchar(256)  DEFAULT NULL,
+    PRIMARY KEY (id)
+    )  ;
+
+-- ----------------------------
+-- Records of t_repo_template
+-- ----------------------------
+BEGIN;
+COMMIT;
+
+-- ----------------------------
 -- Table structure for t_role
 -- ----------------------------
 
@@ -412,7 +508,27 @@ CREATE TABLE IF NOT EXISTS t_sys_info (
 -- Records of t_sys_info
 -- ----------------------------
 BEGIN;
-INSERT INTO t_sys_info VALUES ('1', '卷王', '做更好的调查问卷系统', NULL, 'zh-CN', NULL, 1, '2022-02-11 10:13:19', NULL, '2022-02-11 14:29:03', NULL);
+INSERT INTO t_sys_info VALUES ('1', '卷王', '做更好的调查问卷系统', NULL, 'zh-CN', '1.0.0', 1, '2022-02-11 10:13:19', NULL, '2022-02-11 14:29:03', NULL);
+COMMIT;
+
+-- ----------------------------
+-- Table structure for t_tag
+-- ----------------------------
+
+CREATE TABLE IF NOT EXISTS t_tag (
+    id varchar(64)  NOT NULL,
+    entity_id varchar(64)  DEFAULT NULL COMMENT '实体ID',
+    name varchar(128)  DEFAULT NULL COMMENT '名称',
+    category varchar(256)  DEFAULT NULL COMMENT '分类',
+    create_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    create_by varchar(256)  DEFAULT NULL,
+    PRIMARY KEY (id)
+    )  ;
+
+-- ----------------------------
+-- Records of t_tag
+-- ----------------------------
+BEGIN;
 COMMIT;
 
 -- ----------------------------
@@ -471,6 +587,34 @@ CREATE TABLE IF NOT EXISTS t_user (
 -- ----------------------------
 BEGIN;
 INSERT INTO t_user VALUES ('1457995481966747649', 'Admin', '1', 'F', NULL, '13800138000', 'sqlzero@sqlzero.com', '1492007810605539329', 1, 0, '2021-11-09 16:56:26', NULL, '2022-02-11 13:29:17', '1457995481966747649', 'hello world');
+COMMIT;
+
+-- ----------------------------
+-- Table structure for t_user_book
+-- ----------------------------
+
+CREATE TABLE IF NOT EXISTS t_user_book (
+    id varchar(64)  NOT NULL,
+    name varchar(2048)  DEFAULT NULL COMMENT '问题名称',
+    template_id varchar(64)  DEFAULT NULL COMMENT '模板ID',
+    wrong_times int(11) DEFAULT NULL COMMENT '错误次数',
+    correct_times int(11) DEFAULT NULL COMMENT '正确次数',
+    note text  COMMENT '笔记',
+    status int(11) DEFAULT NULL COMMENT '1标记为简单',
+    type int(11) DEFAULT NULL COMMENT '1错题 2收藏',
+    create_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    create_by varchar(256)  DEFAULT NULL,
+    update_at timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    update_by varchar(256)  DEFAULT NULL,
+    repo_id varchar(256)  DEFAULT NULL,
+    is_marked tinyint(1) DEFAULT NULL,
+    PRIMARY KEY (id)
+    )  ;
+
+-- ----------------------------
+-- Records of t_user_book
+-- ----------------------------
+BEGIN;
 COMMIT;
 
 -- ----------------------------

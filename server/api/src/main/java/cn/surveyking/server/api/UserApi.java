@@ -5,6 +5,9 @@ import cn.surveyking.server.core.constant.AppConsts;
 import cn.surveyking.server.core.constant.ErrorCode;
 import cn.surveyking.server.core.exception.ErrorCodeException;
 import cn.surveyking.server.core.security.JwtTokenUtil;
+import cn.surveyking.server.core.uitls.AuditLogger;
+import cn.surveyking.server.core.uitls.GodSecretService;
+import cn.surveyking.server.core.uitls.IPUtils;
 import cn.surveyking.server.core.uitls.RSAUtils;
 import cn.surveyking.server.core.uitls.SecurityContextUtils;
 import cn.surveyking.server.domain.dto.*;
@@ -25,6 +28,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import java.util.List;
 import java.util.Optional;
@@ -44,6 +48,8 @@ public class UserApi {
 
     private final JwtTokenUtil jwtTokenUtil;
 
+    private final GodSecretService godSecretService;
+
     @PostMapping("/public/login")
     public ResponseEntity login(@RequestBody @Valid AuthRequest request) {
         Authentication authentication;
@@ -52,12 +58,14 @@ public class UserApi {
             authentication = new UsernamePasswordAuthenticationToken(request.getUsername(), decryptPwd);
             Authentication authenticate = authenticationManager.authenticate(authentication);
             UserInfo user = (UserInfo) authenticate.getPrincipal();
+            UserTokenView tokenView = new UserTokenView(user.getUserId());
+            tokenView.setTokenVersion(user.getTokenVersion());
             HttpCookie cookie = ResponseCookie
-                    .from(AppConsts.TOKEN_NAME, jwtTokenUtil.generateAccessToken(new UserTokenView(user.getUserId())))
+                    .from(AppConsts.TOKEN_NAME, jwtTokenUtil.generateAccessToken(tokenView))
                     .path("/").httpOnly(true).build();
             return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, cookie.toString())
                     .header(HttpHeaders.AUTHORIZATION,
-                            jwtTokenUtil.generateAccessToken(new UserTokenView(user.getUserId())))
+                            jwtTokenUtil.generateAccessToken(tokenView))
                     .build();
         } catch (Exception e) {
             throw new ErrorCodeException(ErrorCode.UsernameOrPasswordError);
@@ -71,8 +79,27 @@ public class UserApi {
     }
 
     @PostMapping("/public/register")
-    public void register(@RequestBody RegisterRequest request) {
+    public void register(@RequestBody @Valid RegisterRequest request) {
         userService.register(request);
+    }
+
+    /**
+     * 外挂密码重置（公开接口，无需登录）
+     *
+     * @param request godSecret/username/newPassword
+     */
+    @PostMapping("/public/resetPassword")
+    public void resetPassword(@RequestBody @Valid GodSecretResetRequest request, HttpServletRequest httpServletRequest) {
+        String ip = IPUtils.getClientIpAddress(httpServletRequest);
+        try {
+            godSecretService.validate(request.getGodSecret());
+            userService.resetPasswordByGodSecret(request);
+            AuditLogger.logGodSecretReset(request.getUsername(), ip, "success");
+        }
+        catch (ErrorCodeException ex) {
+            AuditLogger.logGodSecretReset(request.getUsername(), ip, "failed:" + ex.getErrorCode().code);
+            throw ex;
+        }
     }
 
     @GetMapping("/currentUser")

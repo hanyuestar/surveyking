@@ -1,0 +1,85 @@
+# SurveyKing（hanyuestar/surveyking fork v1.0.0）一键部署
+#
+# 部署模式：
+#   方式一（推荐，本文件）：MySQL 8 + 应用，数据持久化三命名卷。
+#   方式二（H2 嵌入式体验，免安装数据库）：mvn clean package -DskipTests -Ph2 后
+#        java -jar server/api/target/surveyking-v1.0.0.jar
+#        数据/日志写入运行目录 ./db、./files、./logs；行政区字典由启动初始化器自动导入一次。
+#
+# 用法：
+#   1.（可选，推荐）设置外挂密码：
+#        export GOD_SECRET='your-strong-secret'
+#   2. 本地先构建 Maven 产物（主构建）：
+#        cd server && mvn clean package -DskipTests -Ppro
+#      （产物位于 server/api/target/surveyking-v1.0.0.jar，Dockerfile 基于该产物打包）
+#   3. 一键启动：
+#        docker compose up -d
+#   4. 打开浏览器访问 http://localhost:1991 ，默认账号 admin / 123456
+#
+# 数据持久化：mysql-data（数据库）、app-files（上传文件）、app-logs（日志）
+#   删除/重建容器不丢数据；如需彻底清理：docker compose down -v
+#
+# godSecret 说明：
+#   - 仅部署时经环境变量 GOD_SECRET 注入，运行期不可修改（修改需重启容器）
+#   - 未设置时功能关闭，登录页不显示钥匙按钮
+#   - 用途：忘记管理员密码时，无需数据库直连即可重置任意账户密码（重置后旧 token 全部失效）
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: surveyking-mysql
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Shanghai
+      MYSQL_ROOT_PASSWORD: surveyking
+      MYSQL_DATABASE: surveyking
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_general_ci
+    volumes:
+      - mysql-data:/var/lib/mysql
+      # 首次启动（空数据卷）时按序执行初始化脚本：
+      # 01 建表 + 默认 admin 账户；02 预置行政区划字典（region，五级全量）
+      # data-region-dict.sql.gz：MySQL 官方镜像原生支持 .sql.gz 自动解压执行
+      - ./server/rdbms/src/main/resources/scripts/init-mysql.sql:/docker-entrypoint-initdb.d/01-init-mysql.sql:ro
+      - ./server/rdbms/src/main/resources/scripts/data-region-dict.sql.gz:/docker-entrypoint-initdb.d/02-data-region-dict.sql.gz:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  app:
+    build:
+      context: ./server
+      dockerfile: api/Dockerfile
+      args:
+        # Maven 主构建产物（server/api/target/surveyking-v1.0.0.jar）
+        JAR_FILE: "api/target/*.jar"
+    image: surveyking/surveyking:v1.0.0
+    container_name: surveyking-app
+    restart: unless-stopped
+    ports:
+      - "1991:1991"
+    environment:
+      TZ: Asia/Shanghai
+      SPRING_PROFILES_ACTIVE: pro
+      # 外挂密码：部署时经 .env / 环境变量注入，运行期不可改（空 = 禁用）
+      GOD_SECRET: ${GOD_SECRET:-}
+      SPRING_DATASOURCE_URL: "jdbc:mysql://mysql:3306/surveyking?rewriteBatchedStatements=true&useUnicode=true&characterEncoding=UTF-8&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai"
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: surveyking
+      # JVM 参数：容器时区 + 堆内存（Dockerfile ENTRYPOINT 支持 ${JAVA_OPTS}）
+      JAVA_OPTS: "-Xmx512m -Duser.timezone=Asia/Shanghai"
+    volumes:
+      # 与 server/api/Dockerfile 的 VOLUME /files、/logs 保持一致
+      - app-files:/files
+      - app-logs:/logs
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+volumes:
+  mysql-data:
+  app-files:
+  app-logs:

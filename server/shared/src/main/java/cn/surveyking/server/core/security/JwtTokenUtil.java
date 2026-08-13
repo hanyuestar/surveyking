@@ -32,7 +32,8 @@ public class JwtTokenUtil {
 
 	public String generateAccessToken(UserTokenView user) {
 		return Jwts.builder().serializeToJsonWith(new JacksonSerializer(objectMapper)).claim("user", user)
-				.setIssuedAt(new Date()).signWith(Keys.hmacShaKeyFor(jwtSecret.getBytes())).compact();
+				.claim("tv", user.getTokenVersion() == null ? 0 : user.getTokenVersion()).setIssuedAt(new Date())
+				.signWith(Keys.hmacShaKeyFor(jwtSecret.getBytes())).compact();
 	}
 
 	public boolean validate(String token) {
@@ -63,6 +64,18 @@ public class JwtTokenUtil {
 				.deserializeJsonWith(new JacksonDeserializer(Maps.of("user", UserTokenView.class).build()))
 				.setSigningKey(Keys.hmacShaKeyFor(jwtSecret.getBytes())).build().parseClaimsJws(token).getBody()
 				.get("user", UserTokenView.class);
+	}
+
+	/**
+	 * 获取 token 中携带的版本号，旧 token 未携带时默认为 0
+	 *
+	 * @param token
+	 * @return
+	 */
+	public Integer getTokenVersion(String token) {
+		Object tv = Jwts.parserBuilder().setSigningKey(Keys.hmacShaKeyFor(jwtSecret.getBytes())).build()
+				.parseClaimsJws(token).getBody().get("tv");
+		return tv == null ? 0 : Integer.valueOf(tv.toString());
 	}
 
 	private static String generateSecurityKey() {

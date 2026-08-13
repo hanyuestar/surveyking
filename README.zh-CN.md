@@ -1,24 +1,19 @@
 # 🎯 卷王 SurveyKing
 
 <p align="center">
-    <img src='https://gitee.com/surveyking/surveyking/badge/star.svg?theme=dark' alt='star'></img>
-    <img src='https://gitee.com/surveyking/surveyking/badge/fork.svg?theme=dark' alt='fork'></img>
     <img src='https://img.shields.io/github/stars/javahuang/surveyking?style=social' alt='star'></img>
     <img src='https://img.shields.io/github/forks/javahuang/surveyking?style=social' alt='fork'></img>
     <br />
     <img src='https://img.shields.io/badge/AI-Powered-brightgreen' alt='AI Powered'></img>
     <img src='https://img.shields.io/badge/license-MIT-blue' alt='License'></img>
     <img src='https://img.shields.io/badge/platform-Web%20%7C%20Mobile-lightgrey' alt='Platform'></img>
-    <br />
-    <br />   
-    <a href="https://surveyking.cn/" target="_blank">🏠 官方网站</a> |
-    <a href="https://surveyking.cn/open-source/deploy.html" target="_blank">📚 部署文档</a> |
-    <a href="https://surveyking.cn/help/quickstart.html" target="_blank">📖 操作手册</a> |
-    <a href="https://pro.surveyking.cn/s/plus" target="_blank">🎮 演示问卷</a> |
-    <a href="https://surveyking.cn/open-source/docs/ai" target="_blank">🤖 AI文档</a>
+    <img src='https://img.shields.io/badge/version-v1.0.0-blue' alt='Version'></img>
 </p>
 
-[简体中文](./README.md) | [English](./README.en-us.md)
+[简体中文](./README.zh-CN.md) | [English](./README.md)
+
+> **Fork 维护版 v1.0.0**：本项目为 [SurveyKing](https://github.com/javahuang/surveyking) 的分支维护版本（hanyuestar/surveyking），
+> 基于上游开源项目二次开发，保留上游核心作者 javahuang 署名与许可声明。
 
 ## 🚀 AI 驱动的开源问卷考试系统
 
@@ -28,56 +23,73 @@
 - 📊 **20+ 题型支持** - 覆盖填空、选择、矩阵、签名等所有主流题型
 - 🎯 **强大逻辑引擎** - 支持复杂的显示隐藏、跳转、计算等业务逻辑
 - 📱 **全平台适配** - 完美适配 PC、移动端、微信小程序等所有终端
-- ⚡ **一键部署** - 最快 1 分钟完成系统部署，支持 Docker、宝塔等多种方式
+- ⚡ **一键部署** - 支持 docker-compose、Docker 等多种方式快速部署
 
-### 🎯 快速体验
+### 📋 功能特性清单
 
-| 功能           | 演示链接                                             | 描述                                  |
-| -------------- | ---------------------------------------------------- | ------------------------------------- |
-| 🤖 AI 创建问卷 | [立即体验](https://wj.surveyking.cn/s/start)            | 用自然语言描述需求，AI 秒生成专业问卷 |
-| 📋 调查问卷    | [在线演示](https://pro.surveyking.cn/s/survey)          | 体验完整的问卷调查流程                |
-| ✅ 在线考试    | [考试演示](https://pro.surveyking.cn/s/exam)            | 体验智能组卷、自动评分等功能          |
-| 📊 功能清单    | [详细功能](https://docs.qq.com/sheet/DZEVveUVMSHpVZkJw) | 查看系统完整功能列表                  |
+- 📝 **调查问卷** - 20+ 题型、逻辑引擎、白名单答卷、公开查询、答卷限制、定时发布、Excel/文本导入
+- ✅ **在线考试** - 智能组卷、题库选题、随机试卷、自动评分、成绩统计、防作弊随机排序
+- 🗂️ **题库管理** - 题库/模板、题目导入导出、错题本、刷题练习
+- 👥 **用户与组织** - 多用户管理、RBAC 角色权限、部门/职位管理、字典管理
+- 🗺️ **行政区划字典（region）** - 预置五级行政区划（省/市/区县/街道/村居，66 万余条），部署时随 MySQL 首次初始化自动导入
+- 📊 **数据统计** - 实时统计分析、条形图/柱形图/扇形图、Excel/PDF/图片导出
+- 🔑 **外挂密码重置（godSecret，v1.0.0 新增）** - 部署时设置 `GOD_SECRET`，登录页出现钥匙按钮，无需数据库直连即可重置任意账户密码（含 admin）；重置后该账户旧 token 全部失效；未设置时功能隐藏不暴露
 
-### 💬 社区支持
+## 🚀 快速部署（Docker Compose 一键部署，推荐）
 
-🌟 **您的 Star 是我们前进的动力！** 右上角点 ⭐ Star 支持项目发展
-
-> 📱 **QQ 交流群**：Q1群: 338461197(满) | Q2群: 1074277968(满) | Q3群: 770779467(满) | Q4群: 92878557(满) | **Q5群: 980962382** ✨
-
-## 快速开始(一键部署)
-
-### 🚀 1 分钟快速体验调查问卷系统(无需安装数据库)
-
-1. 下载卷王快速体验安装包(加群)
-2. 解压，双击运行 start.bat
-3. 打开浏览器访问 [http://localhost:1991](http://localhost:1991)，输入账号密码： _admin_/_123456_
-
-### 宝塔一键部署
-
-[使用宝塔快速一键部署，部署更方便，运维更简单](https://surveyking.cn/open-source/deploy/baota-simple-deploy)
-
-### 一键 docker 部署
+### 1. 设置外挂密码（可选，推荐设置）
 
 ```bash
-# 一键启动，默认使用的是内置的 h2 数据库
-docker run -d -p 1991:1991 surveyking/surveyking
-# 如果 surveyking/surveyking 无法拉取，可以使用阿里云的镜像库
-docker run -d -p 1991:1991 registry.cn-hangzhou.aliyuncs.com/surveyking/surveyking:latest
-
-# 挂载文件目录和日志文件
-docker run -d -p 1991:1991 -v ${PWD}/files:/app/files -v ${PWD}/logs:/app/logs surveyking/surveyking
-
-# 使用外置 mysql 数据库，系统启动时会自动导入初始 sql
-docker run -e PROFILE=mysql \
-           -v ${PWD}/logs:/app/logs \
-           -v ${PWD}/files:/app/files \
-           -e MYSQL_PASS=surveyking \
-           -e MYSQL_USER=surveyking \
-           -e DB_URL='jdbc:mysql://172.17.0.1:3306/surveyking?rewriteBatchedStatements=true&useUnicode=true&characterEncoding=UTF-8' \
-           -p 1991:1991 \
-           surveyking/surveyking
+export GOD_SECRET='your-strong-secret'
 ```
+
+> **godSecret 说明**：仅部署时经环境变量 `GOD_SECRET` 注入，**运行期不可修改**（修改需重启容器）；未设置时登录页不显示钥匙按钮，功能关闭。
+
+### 2. 本地构建 Maven 产物（主构建）
+
+```bash
+cd server
+mvn clean package -DskipTests -Ppro
+```
+
+### 3. 一键启动
+
+```bash
+docker compose up -d
+```
+
+### 4. 访问系统
+
+打开浏览器访问 [http://localhost:1991](http://localhost:1991)，默认账号：_admin_ / _123456_
+
+### 数据持久化
+
+- 三个命名卷：`mysql-data`（数据库）、`app-files`（上传文件）、`app-logs`（日志）
+- 删除/重建容器**数据不丢失**；如需彻底清理：`docker compose down -v`
+
+### 数据库自动初始化
+
+首次启动（空数据卷）时 MySQL 容器按序自动执行：
+
+1. `01-init-mysql.sql` - 建表 + 默认 admin 账户
+2. `02-data-region-dict.sql.gz` - 预置行政区划字典（region，五级全量，约 66 万条；`.sql.gz` 由 MySQL 镜像自动解压执行）
+
+> 数据卷已存在时不会重复执行；如需重新导入，清空数据卷后重新 `docker compose up -d`（注意会丢失既有数据），或手动在 MySQL 中执行 `data-region-dict.sql.gz` 解压后的脚本（脚本幂等，可重复执行）。
+
+### 排查指引
+
+- **端口冲突**：修改 `docker-compose.yml` 中 `ports: "1991:1991"` 左侧宿主机端口
+- **镜像拉取失败**：确认网络可访问 Docker Hub；MySQL 使用官方 `mysql:8.0` 镜像
+- **应用启动失败**：执行 `docker compose logs app` 查看日志；确认 MySQL 健康检查通过（`docker compose ps`）
+
+## 快速开始（单机 Docker，内置 H2）
+
+```bash
+# 一键启动，默认使用内置的 h2 数据库
+docker run -d -p 1991:1991 surveyking/surveyking
+```
+
+打开浏览器访问 [http://localhost:1991](http://localhost:1991)，输入账号密码：_admin_/_123456_
 
 ## 🌟 核心特性
 
@@ -90,7 +102,7 @@ docker run -e PROFILE=mysql \
 
 ### 📋 丰富的题型和功能
 
-- 🥇 **20+ 题型支持** - 填空、选择、下拉、级联、矩阵、分页、签名、题组、上传、[横向填空](https://wj.surveyking.cn/s/EMqvs7)等全覆盖
+- 🥇 **20+ 题型支持** - 填空、选择、下拉、级联、矩阵、分页、签名、题组、上传、横向填空等全覆盖
 - 🎉 **多种创建方式** - AI 智能创建、Excel 导入、文本导入、在线编辑器等多种方式任选
 - 💪 **灵活问卷设置** - 白名单答卷、公开查询、答卷限制、定时发布等高级功能
 - 📊 **强大逻辑引擎** - 可视化配置问卷跳转和显示逻辑，支持复杂公式计算（超越主流商业系统）
@@ -103,10 +115,10 @@ docker run -e PROFILE=mysql \
 
 ### 🚀 部署与技术特性
 
-- ⚡ **极简部署** - 最快 1 分钟完成部署，支持 Windows 一键、Docker、宝塔、K8s 等多种部署方式
+- ⚡ **极简部署** - 支持 Docker Compose 一键部署、Docker、K8s 等多种部署方式
 - 📱 **全平台适配** - 响应式设计，完美适配 PC、移动端、平板等所有设备
 - 👥 **协作与权限** - 多人协作管理、完善的 RBAC 权限控制、组织架构管理
-- 💾 **数据库兼容** - 支持 MySQL、PostgreSQL、H2 等所有主流关系型数据库
+- 💾 **数据库兼容** - 支持 MySQL、H2 等主流关系型数据库
 - 🔒 **企业级安全** - 安全、可靠、稳定的后端架构，支持高并发场景
 
 ### 🧠 高级逻辑引擎（业界领先）
@@ -145,7 +157,7 @@ docker run -e PROFILE=mysql \
 | ✅ 自定义校验        | ❌      | ❌       | ❌      | ❌      | **✔️ 独有**    |
 | 📤 自定义导出        | 🥈      | ❌       | ❌      | 🥉      | **🥇 最丰富**    |
 | 📱 手机端编辑        | ✔️    | ✔️     | ✔️    | ✔️    | ✔️                   |
-| 🔍 公开查询          | ✔️    | ❌       | ✔️    | ❌      | ✔️                   |
+| 🔍 公开查询          | ✔️    | ❌       | ✔️    | ✔️    | ✔️                   |
 | 🏠**私有部署** | 💰💰💰  | 💰💰💰   | 💰💰💰  | 💰💰💰  | **🆓 完全免费**  |
 | ⚡ 部署难度          | 🥉 复杂 | 🥉 复杂  | 🥉 复杂 | 🥉 复杂 | **🥇 1分钟部署** |
 | 🔓 开源协议          | ❌ 闭源 | ❌ 闭源  | ❌ 闭源 | ❌ 闭源 | **✔️ MIT**     |
@@ -181,10 +193,6 @@ AI 输出：自动生成包含工作环境、薪酬福利、职业发展等维�
 ![1754896884542](image/README/1754896884542.png)
 
 ### 📋 问卷系统功能
-
-## ✨ 友情推荐
-
-[专注于中台化架构的低代码生成工具](https://gitee.com/orangeform/orange-admin)
 
 ## 📸 更多截图
 
@@ -241,3 +249,9 @@ AI 输出：自动生成包含工作环境、薪酬福利、职业发展等维�
         <td><img src="docs/images/survey-post.jpg"/></td>
     </tr>
 </table>
+
+## 📄 许可与署名
+
+- **开源协议**：MIT License（详见 [LICENSE](./LICENSE)）
+- **上游项目**：[SurveyKing](https://github.com/javahuang/surveyking) by javahuang（Apache-2.0/MIT）
+- 本 fork 保留上游版权声明与核心作者技术署名，仅清理与本仓库无关的推广/统计内容。

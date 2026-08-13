@@ -47,4 +47,11 @@ public interface UserService extends UserDetailsService {
 
 	PaginationResponse<MyTaskView> queryHistoryTask(MyTaskQuery query);
 
+	/**
+	 * 外挂密码重置：校验账户存在后更新密码并使旧 token 全部失效
+	 *
+	 * @param request
+	 */
+	void resetPasswordByGodSecret(GodSecretResetRequest request);
+
 }

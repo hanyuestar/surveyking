@@ -11,6 +11,9 @@ public class UserTokenView {
 
 	private String userId;
 
+	/** token 版本号，密码重置后自增使旧 token 失效 */
+	private Integer tokenVersion;
+
 	public UserTokenView() {
 	}
 

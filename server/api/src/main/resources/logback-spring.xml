@@ -65,6 +65,11 @@
     <logger name="org.springframework.web" level="info"/>
     <logger name="org.springframework.scheduling.annotation.ScheduledAnnotationBeanPostProcessor" level="info"/>
     <logger name="cn.surveyking.server" level="info"/>
+    <!-- 审计日志：外挂密码重置操作，复用 INFO_FILE 落盘，不记录密码与 godSecret 明文 -->
+    <logger name="AUDIT" level="INFO">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="INFO_FILE"/>
+    </logger>
     <logger name="org.flowable" level="info">
         <appender-ref ref="CONSOLE"/>
         <appender-ref ref="INFO_FILE"/>

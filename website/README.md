@@ -1,6 +1,6 @@
 # Website
 
-<https://surveyking.cn> 官网
+<hanyuestar.github.io> 文档站
 
 ## 安装
 
@@ -23,4 +23,3 @@ yarn build
 ## 部署
 
 ```console
-```

@@ -35,4 +35,7 @@ public class Account extends BaseModel {
 	/** 0失活 1激活 */
 	private Integer status;
 
+	/** token 版本号，重置密码后自增使旧 token 失效 */
+	private Integer tokenVersion = 0;
+
 }

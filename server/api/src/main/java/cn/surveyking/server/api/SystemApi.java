@@ -11,6 +11,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import javax.validation.Validated;
 import javax.validation.ValidationException;
 import java.util.Arrays;
 import java.util.List;
@@ -163,7 +164,7 @@ public class SystemApi {
 	 */
 	@PostMapping("/user/create")
 	@PreAuthorize("hasAuthority('system:user:create')")
-	public void createUser(@RequestBody @Valid UserRequest request) {
+	public void createUser(@RequestBody @Validated(UserRequest.Create.class) UserRequest request) {
 		userService.createUser(request);
 	}
 
