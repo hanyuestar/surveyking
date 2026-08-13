@@ -28,12 +28,41 @@ jobs:
           distribution: temurin
           java-version: '8'
 
+      # 缓存 Maven 依赖，避免重复下载（Maven Central 对高频访问返回 403）
+      - name: Cache Maven dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('server/pom.xml', 'server/api/pom.xml', 'server/rdbms/pom.xml', 'server/shared/pom.xml', 'server/ai/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      # 使用阿里云镜像作为 Maven Central 镜像源，规避 403/网络波动
+      - name: Configure Maven mirror (Aliyun)
+        run: |
+          mkdir -p ~/.m2
+          cat > ~/.m2/settings.xml << 'EOF'
+          <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                    xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 https://maven.apache.org/xsd/settings-1.0.0.xsd">
+            <mirrors>
+              <mirror>
+                <id>aliyun</id>
+                <mirrorOf>central</mirrorOf>
+                <name>Aliyun Maven Mirror</name>
+                <url>https://maven.aliyun.com/repository/public</url>
+              </mirror>
+            </mirrors>
+          </settings>
+          EOF
+          echo "settings.xml configured"
+
       - name: Build with Maven
         run: |
           cd server
           mvn clean package -DskipTests -Ppro
         env:
-          MAVEN_OPTS: "-Dmaven.repo.local=${{ runner.temp }}/m2"
+          MAVEN_OPTS: "-Dmaven.repo.local=$HOME/.m2/repository"
 
       - name: Verify jar exists
         run: |
