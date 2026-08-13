@@ -1,0 +1,82 @@
+name: Publish Docker image
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+
+jobs:
+  push_to_registries:
+    name: Push Docker image to registries
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: read
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v3
+
+      - name: Save version info
+        run: |
+          git describe --tags > VERSION 2>/dev/null || echo "0.0.0-dev" > VERSION
+
+      # SurveyKing 是 Maven 多模块项目（Java 8），需要先构建 jar
+      - name: Set up JDK 8
+        uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: '8'
+
+      - name: Build with Maven
+        run: |
+          cd server
+          mvn clean package -DskipTests -Ppro
+        env:
+          MAVEN_OPTS: "-Dmaven.repo.local=${{ runner.temp }}/m2"
+
+      - name: Verify jar exists
+        run: |
+          ls -la server/api/target/surveyking-v1.0.0.jar
+          echo "JAR OK"
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/surveyking
+            ghcr.io/${{ github.repository }}
+          flavor: |
+            latest=true
+
+      - name: Build and push Docker images
+        uses: docker/build-push-action@v3
+        with:
+          context: server
+          file: server/api/Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            JAR_FILE=api/target/surveyking-v1.0.0.jar
