@@ -495,7 +495,10 @@ CREATE TABLE IF NOT EXISTS t_sys_info (
     description varchar(128)  DEFAULT NULL COMMENT '系统描述信息',
     avatar varchar(64)  DEFAULT NULL COMMENT '图标',
     locale varchar(64)  DEFAULT NULL COMMENT '默认语言',
-    version varchar(64)  DEFAULT NULL COMMENT '默认语言',
+    version varchar(64)  DEFAULT NULL COMMENT '版本号',
+    setting varchar(1024) DEFAULT NULL COMMENT '其他系统设置',
+    ai_setting varchar(1024) DEFAULT NULL COMMENT 'AI设置',
+    register_info varchar(1024) DEFAULT NULL COMMENT '注册信息',
     is_default tinyint(1) DEFAULT NULL COMMENT '是否默认设置',
     create_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     create_by varchar(256)  DEFAULT NULL,
@@ -504,11 +507,17 @@ CREATE TABLE IF NOT EXISTS t_sys_info (
     PRIMARY KEY (id)
     )  ;
 
+-- 兼容已存在的旧库（t_sys_info 缺失 setting/ai_setting/register_info 三列会导致 /api/system 500）：
+-- 因 sql.init.mode=always 每次启动都会执行本脚本，此处幂等补齐列，旧库无需清空数据即可升级。
+ALTER TABLE t_sys_info ADD COLUMN IF NOT EXISTS setting varchar(1024) DEFAULT NULL COMMENT '其他系统设置';
+ALTER TABLE t_sys_info ADD COLUMN IF NOT EXISTS ai_setting varchar(1024) DEFAULT NULL COMMENT 'AI设置';
+ALTER TABLE t_sys_info ADD COLUMN IF NOT EXISTS register_info varchar(1024) DEFAULT NULL COMMENT '注册信息';
+
 -- ----------------------------
 -- Records of t_sys_info
 -- ----------------------------
 BEGIN;
-INSERT INTO t_sys_info VALUES ('1', '卷王', '做更好的调查问卷系统', NULL, 'zh-CN', '1.0.0', 1, '2022-02-11 10:13:19', NULL, '2022-02-11 14:29:03', NULL);
+INSERT INTO t_sys_info (id, name, description, avatar, locale, version, setting, ai_setting, register_info, is_default, create_at, create_by, update_at, update_by) VALUES ('1', '卷王', '做更好的调查问卷系统', NULL, 'zh-CN', '1.0.0', NULL, NULL, NULL, 1, '2022-02-11 10:13:19', NULL, '2022-02-11 14:29:03', NULL);
 COMMIT;
 
 -- ----------------------------
