@@ -98,8 +98,10 @@ jobs:
           flavor: |
             latest=true
           tags: |
-            # push tag v1.0.0 时只生成 v1.0.0（保留原始 git tag 名），不再生成 1 / 1.0 / 1.0.0 等 semver 别名
+            # push tag v*.*.* 时只生成 vX.Y.Z（保留原始 git tag 名），不再生成 1 / 1.0 / 1.0.0 等 semver 别名
             type=ref,event=tag
+            # workflow_dispatch（无 git tag）时退化为 latest，避免 "tag is needed when pushing to registry" 构建失败
+            type=raw,value=latest,enable=${{ github.event_name == 'workflow_dispatch' }}
 
       - name: Build and push Docker images
         uses: docker/build-push-action@v3
