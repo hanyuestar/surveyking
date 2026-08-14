@@ -38,10 +38,14 @@ public class CacheConfig extends CachingConfigurerSupport {
 			@Override
 			protected Cache createConcurrentMapCache(final String name) {
 				return new ConcurrentMapCache(name, Caffeine.newBuilder().expireAfter(new Expiry<Object, Object>() {
-					@Override
-					public long expireAfterCreate(Object key, Object value, long currentTime) {
-						return entries.get(name).toNanos();
-					}
+			@Override
+			public long expireAfterCreate(Object key, Object value, long currentTime) {
+				// 防御：custom-cache.entries 缺失或本缓存名未配置时，回退 1h 默认 TTL，
+				// 避免 entries 为 null / 缺 key 触发空指针导致应用启动即退出。
+				Duration ttl = entries != null ? entries.getOrDefault(name, Duration.ofHours(1))
+						: Duration.ofHours(1);
+				return ttl.toNanos();
+			}
 
 					@Override
 					public long expireAfterUpdate(Object key, Object value, long currentTime,
@@ -58,7 +62,11 @@ public class CacheConfig extends CachingConfigurerSupport {
 			}
 		};
 
-		cacheManager.setCacheNames(entries.entrySet().stream().map(x -> x.getKey()).collect(Collectors.toList()));
+		// entries 缺失时不预置缓存名，交由按需懒加载（默认 1h TTL），避免 NPE。
+		if (entries != null) {
+			cacheManager.setCacheNames(
+					entries.entrySet().stream().map(Map.Entry::getKey).collect(Collectors.toList()));
+		}
 		return cacheManager;
 	}
 
