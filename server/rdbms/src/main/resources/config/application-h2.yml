@@ -28,10 +28,23 @@ custom-cache:
     deptCache: 1d
     projectPermissionCache: 1d
     commonCache: 30d
+# H2 体验模式必须配置 file-storage.local.root-path：
+# FileServiceImpl（@Service + @RequiredArgsConstructor）强制注入 StorageService，
+# 而 StorageAutoConfiguration.storageService() 由
+# @ConditionalOnProperty(prefix = "file-storage.local", name = "root-path") 门控；
+# 若未配置该属性，storageService Bean 不会被创建，FileServiceImpl 依赖无法满足，
+# 导致应用启动即失败（与 custom-cache 漏配同类的 profile 缺口问题）。
+# pro/dev 配置已包含，此处补齐，与 pro 保持一致。
+file-storage:
+  local:
+    root-path: ./files
 # H2 体验模式：init-h2.sql 仅含业务表，Flowable 工作流表（ACT_*）未包含；
 # 必须允许 Flowable 自动建表，否则引擎初始化失败导致应用启动即退出。
-# （全局 application.yml 中 flowable.database-schema-update=false 仅适用于
-#   MySQL/pro 模式——其 init-mysql.sql 已含 Flowable 表。）
+# 注意：本 fork 当前已禁用 flow 模块（server/pom.xml 中 <module>flow</module> 被注释，
+#       且 api 模块不依赖 flow），flowable-spring-boot-starter 不在运行时 classpath 上，
+#       Spring Boot 不会自动创建 ProcessEngine，因此下方 database-schema-update 当前为无效配置，
+#       且 init-mysql.sql 实际上【并不包含】ACT_* 表也不会引发问题。
+#       若日后重新启用 flow 模块，需改为 true 或在 init-mysql.sql 中补入 ACT_* 建表语句。
 flowable:
   database-schema-update: true
 mybatis-plus:
