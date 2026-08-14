@@ -7,12 +7,12 @@
     <img src='https://img.shields.io/badge/AI-Powered-brightgreen' alt='AI Powered'></img>
     <img src='https://img.shields.io/badge/license-MIT-blue' alt='License'></img>
     <img src='https://img.shields.io/badge/platform-Web%20%7C%20Mobile-lightgrey' alt='Platform'></img>
-    <img src='https://img.shields.io/badge/version-v1.0.5-blue' alt='Version'></img>
+    <img src='https://img.shields.io/badge/version-v1.0.6-blue' alt='Version'></img>
 </p>
 
 [简体中文](./README.zh-CN.md) | [English](./README.md)
 
-> **Fork 维护版 v1.0.5**：本项目为 [SurveyKing](https://github.com/javahuang/surveyking) 的分支维护版本（hanyuestar/surveyking），
+> **Fork 维护版 v1.0.6**：本项目为 [SurveyKing](https://github.com/javahuang/surveyking) 的分支维护版本（hanyuestar/surveyking），
 > 基于上游开源项目二次开发，保留上游核心作者 javahuang 署名与许可声明。
 
 ## 🚀 AI 驱动的开源问卷考试系统

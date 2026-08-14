@@ -673,4 +673,48 @@ BEGIN;
 INSERT INTO t_user_role VALUES ('1488542015867121666', 'SysUser', 1457995481966747649, 1457995481928998914,  '2022-02-01 23:57:27', '1457995481966747649', NULL, NULL);
 COMMIT;
 
+-- ============================================================================
+-- 幂等补齐（fork 缺陷根除）：H2 初始化脚本多张表缺列，与实体 / MySQL 初始化
+-- 不一致，导致 SELECT 报 Column XXX not found（典型如 t_user.correct_times）。
+-- 以下用 ALTER TABLE ADD COLUMN IF NOT EXISTS 在每次启动时补齐，
+-- 旧 H2 库（含已上线用户库）无需清空即可升级。
+-- 类型已剥离 CHARACTER SET / COLLATE（H2 不支持）；NOT NULL 放宽为 DEFAULT NULL
+-- 以兼容「旧表已有数据」的场景（如 t_dashboard.key），避免 ALTER 因非空约束失败。
+-- 覆盖表：t_user / t_answer / t_project / t_project_partner / t_template / t_role / t_dashboard
+-- 与 v1.0.3 的 t_sys_info 补齐同源，属同一类缺陷的彻底修复。
+-- ============================================================================
+
+-- t_user: 错题答对清除次数
+ALTER TABLE t_user ADD COLUMN IF NOT EXISTS correct_times int DEFAULT NULL COMMENT '错题答对清除次数';
+
+-- t_answer: 考试 / 暂存相关字段
+ALTER TABLE t_answer ADD COLUMN IF NOT EXISTS exam_exercise_type varchar(4) DEFAULT NULL COMMENT '考试练习类型';
+ALTER TABLE t_answer ADD COLUMN IF NOT EXISTS exam_info longtext DEFAULT NULL COMMENT '考试信息';
+ALTER TABLE t_answer ADD COLUMN IF NOT EXISTS exam_score float DEFAULT NULL COMMENT '考试分数';
+ALTER TABLE t_answer ADD COLUMN IF NOT EXISTS repo_id varchar(256) DEFAULT NULL COMMENT '所属题库';
+ALTER TABLE t_answer ADD COLUMN IF NOT EXISTS survey longtext DEFAULT NULL COMMENT '问卷';
+ALTER TABLE t_answer ADD COLUMN IF NOT EXISTS temp_answer longtext DEFAULT NULL COMMENT '暂存答案';
+
+-- t_project
+ALTER TABLE t_project ADD COLUMN IF NOT EXISTS mode varchar(32) DEFAULT NULL COMMENT '问卷模式';
+ALTER TABLE t_project ADD COLUMN IF NOT EXISTS parent_id varchar(64) DEFAULT '0' COMMENT '父ID';
+ALTER TABLE t_project ADD COLUMN IF NOT EXISTS priority int DEFAULT 1000 COMMENT '优先级';
+
+-- t_project_partner
+ALTER TABLE t_project_partner ADD COLUMN IF NOT EXISTS initial_value longtext DEFAULT NULL COMMENT '初始值';
+ALTER TABLE t_project_partner ADD COLUMN IF NOT EXISTS status int DEFAULT 0 COMMENT '0未访问 1已访问 2已答题';
+ALTER TABLE t_project_partner ADD COLUMN IF NOT EXISTS uid varchar(64) DEFAULT NULL COMMENT '项目内唯一ID';
+ALTER TABLE t_project_partner ADD COLUMN IF NOT EXISTS user_name varchar(256) DEFAULT NULL COMMENT '参与者姓名';
+
+-- t_template
+ALTER TABLE t_template ADD COLUMN IF NOT EXISTS mode varchar(32) DEFAULT NULL COMMENT '模板模式 survey/exam';
+ALTER TABLE t_template ADD COLUMN IF NOT EXISTS repo_id varchar(64) DEFAULT NULL COMMENT '所属题库';
+ALTER TABLE t_template ADD COLUMN IF NOT EXISTS serial_no varchar(256) DEFAULT NULL COMMENT '序号';
+
+-- t_role
+ALTER TABLE t_role ADD COLUMN IF NOT EXISTS status tinyint(1) DEFAULT 1 COMMENT '1激活 0失活';
+
+-- t_dashboard（key 在 MySQL 为 NOT NULL，旧表已有数据时放宽可空避免 ALTER 失败）
+ALTER TABLE t_dashboard ADD COLUMN IF NOT EXISTS `key` varchar(256) DEFAULT NULL COMMENT '仪表盘组件key';
+
 SET FOREIGN_KEY_CHECKS = 1;
