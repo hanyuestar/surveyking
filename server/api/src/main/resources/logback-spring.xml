@@ -90,4 +90,13 @@
             <appender-ref ref="ASYNC_ERROR"/>
         </root>
     </springProfile>
+
+    <!-- H2 体验模式：输出到控制台 + 文件，便于排查启动问题（原配置遗漏此 profile 导致无日志） -->
+    <springProfile name="h2">
+        <root level="info">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="INFO_FILE"/>
+            <appender-ref ref="ASYNC_ERROR"/>
+        </root>
+    </springProfile>
 </configuration>

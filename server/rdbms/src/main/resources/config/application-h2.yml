@@ -16,6 +16,12 @@ spring:
       continue-on-error: true
       mode: always
       schema-locations: classpath:scripts/init-h2.sql
+# H2 体验模式：init-h2.sql 仅含业务表，Flowable 工作流表（ACT_*）未包含；
+# 必须允许 Flowable 自动建表，否则引擎初始化失败导致应用启动即退出。
+# （全局 application.yml 中 flowable.database-schema-update=false 仅适用于
+#   MySQL/pro 模式——其 init-mysql.sql 已含 Flowable 表。）
+flowable:
+  database-schema-update: true
 mybatis-plus:
   configuration:
     log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl
