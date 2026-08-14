@@ -1,8 +1,8 @@
 # 配置文件不能放在根目录下面，否则会被 api 的 application-dev.yml 覆盖
 spring:
   h2:
-    enabled:
-      true console:
+    console:
+      enabled: true
   datasource:
 #    username: sa
 #    password: sa
