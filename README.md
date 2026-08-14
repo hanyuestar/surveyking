@@ -11,12 +11,12 @@
   <img src='https://img.shields.io/badge/AI-Powered-brightgreen' alt='AI Powered' />
   <img src='https://img.shields.io/badge/license-MIT-blue' alt='License' />
   <img src='https://img.shields.io/badge/platform-Web%20%7C%20Mobile-lightgrey' alt='Platform' />
-  <img src='https://img.shields.io/badge/version-v1.0.4-blue' alt='Version' />
+  <img src='https://img.shields.io/badge/version-v1.0.5-blue' alt='Version' />
 </p>
 
 [English](./README.md) | [简体中文](./README.zh-CN.md)
 
-> **Fork 维护版 v1.0.4**：本项目为 [SurveyKing](https://github.com/javahuang/surveyking) 的分支维护版本（hanyuestar/surveyking），
+> **Fork 维护版 v1.0.5**：本项目为 [SurveyKing](https://github.com/javahuang/surveyking) 的分支维护版本（hanyuestar/surveyking），
 > 基于上游 Apache-2.0/MIT 开源项目二次开发，保留上游核心作者 javahuang 署名与许可声明。
 
 SurveyKing is an AI-powered, enterprise-grade survey and online exam system. Create professional surveys from natural language, run exams with item banks and auto-grading, and publish across web and mobile — all open source.
