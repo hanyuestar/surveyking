@@ -9,10 +9,15 @@ COPY ${JAR_FILE} app.jar
 # 无需内嵌 H2 数据库，故移除该 COPY，避免构建失败。
 # COPY surveyking.mv.db surveyking.mv.db
 RUN mkdir /surveyking
-# 安装 fontconfig（内含 freetype 原生库）：AJ-Captcha 在无头容器里加载水印字体
-# 报 "Problem reading font data"，根因是缺少字体栅格化依赖，装 fontconfig 即可修复；
-# ttf-dejavu 提供基础西文字形（水印文本为英文 survey），避免登录验证码水印渲染异常。
-RUN apk add --no-cache fontconfig ttf-dejavu
+# 修复无头容器验证码 500（sun.awt.X11FontManager 静态初始化失败 / NoClassDefFoundError）：
+# Temurin 8 在 Alpine 上的 libfontmanager.so 除依赖 fontconfig+freetype 外，还硬依赖 X11 客户端库
+# （libX11 等）。仅装 fontconfig 不够，X11FontManager 类在首次加载字体时静态初始化失败，
+# 之后整 JVM 生命周期内该类被标记为"无法初始化"，导致 /captcha/get 永久 500。
+# 故需补装 X11 客户端库 + 字体，并强制 -Djava.awt.headless=true 避免需要 DISPLAY。
+RUN apk add --no-cache fontconfig ttf-dejavu ttf-liberation \
+    libx11 libxext libxrender libxtst libxi \
+    libxrandr libxcomposite libxdamage libxcursor \
+    && fc-cache -f
 VOLUME /files
 VOLUME /logs
-ENTRYPOINT ["sh", "-c", "java ${JAVA_OPTS} -jar /app.jar ${0} ${@}"]
+ENTRYPOINT ["sh", "-c", "java -Djava.awt.headless=true ${JAVA_OPTS} -jar /app.jar ${0} ${@}"]
