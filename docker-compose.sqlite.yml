@@ -1,0 +1,64 @@
+# SurveyKing（hanyuestar/surveyking fork v1.0.0）—— SQLite 体验版（H2 嵌入式文件数据库）
+#
+# 适用场景：个人 / 轻量 / 不想安装 MySQL，使用内嵌的文件型数据库，开箱即用。
+# 说明：本 fork 的「SQLite」体验实为 Spring Boot 的 H2 嵌入式文件数据库（.mv.db），
+#       无需任何外部数据库服务，数据直接落在挂载目录的文件中。
+# 对应「MySQL 生产版」请见同目录 docker-compose.mysql.yml。
+#
+# 用法：
+#   在本仓库根目录执行：
+#        docker compose -f docker-compose.sqlite.yml up -d
+#   访问 http://localhost:1991 ，默认账号 admin / 123456
+#
+# 数据目录（相对本文件，可随意改路径）：
+#   ./files  上传文件    ./logs  日志    ./db   H2 数据库文件（surveyking.mv.db）
+#   删除/重建容器不丢数据；如需彻底清理：docker compose -f docker-compose.sqlite.yml down -v
+#
+# ⚠️ 本 fork 必须注意以下 4 点（已在本文件处理）：
+#   - 镜像打包默认 profile 是 pro(MySQL)，必须显式 SPRING_PROFILES_ACTIVE=h2 切到 H2。
+#   - Dockerfile 没有 WORKDIR，H2 数据 ./db 会落在容器根目录 /db；用 working_dir:/app
+#     让数据落到 /app/db，与挂载的 ./db 一致（否则数据写进容器可写层，重建即丢）。
+#   - H2 模式不加载 application-pro.yml，server.port 回退 Spring 默认的 8080，
+#     必须 SERVER_PORT=1991 与端口映射对齐，否则外网 1991 访问不通。
+#   - H2 模式不配置 file-storage.root-path（本地存储 AutoConfig 条件不满足），文件上传不可用，
+#     必须显式 FILE_STORAGE_LOCAL_ROOT_PATH=/app/files 启用并落到挂载点。
+services:
+  surveyking:
+    # 当前 Docker Hub 已有 latest/main；v1.0.0 tag 需重推触发。临时用 latest 可直接跑通。
+    # 若用 GitHub 镜像源则换成 ghcr.io/hanyuestar/surveyking:latest
+    image: kyson666/surveyking:latest
+    container_name: surveyking-sqlite
+    working_dir: /app
+    environment:
+      TZ: Asia/Shanghai
+      # 激活 H2 嵌入式数据库（免装 MySQL）。镜像默认是 pro，必须显式切到 h2
+      SPRING_PROFILES_ACTIVE: h2
+      # H2 模式不加载 pro 配置，server.port 回退 8080，显式对齐端口映射
+      SERVER_PORT: "1991"
+      # 启用本地文件存储并落到挂载点（H2 模式不挂载 root-path 则上传功能不可用）
+      FILE_STORAGE_LOCAL_ROOT_PATH: /app/files
+      # 日志落盘到挂载点（Spring Boot 宽松绑定：LOGGING_FILE_PATH -> logging.file.path）
+      LOGGING_FILE_PATH: /app/logs
+      # JVM 参数：堆内存 + 时区
+      JAVA_OPTS: "-Xmx512m -Duser.timezone=Asia/Shanghai"
+      # 外挂密码（可选）：部署时设置，运行期不可改；留空则关闭登录页钥匙按钮
+      GOD_SECRET: ${GOD_SECRET:-}
+    volumes:
+      - ./files:/app/files
+      - ./logs:/app/logs
+      - ./db:/app/db
+    ports:
+      - 1991:1991
+    restart: unless-stopped
+
+# ─────────────────────────────────────────────────────────────
+# 数据兼容性（务必阅读）
+#   若你此前用过官方镜像 surveyking/surveyking:v1.12.0（其文件库名为 ./db/survey），
+#   本 fork 的 H2 库名为 ./db/surveyking（文件 surveyking.mv.db），且基于 v1.9.0 源码，
+#   schema 与 v1.12.0 数据不完全一致。因此：旧的 v1.12.0 数据【无法直接复用】，
+#   直接挂旧 db 目录会触发全新初始化（新建空库 + 自动预置 66 万条行政区字典），
+#   原有问卷数据不会迁移过来。
+#   正确做法：先备份旧 db 目录，清空后全新启动；如需保留旧数据，需另行做迁移，
+#   复杂度高，建议重头录入或保留旧容器并行使用。
+#   首次启动后请尽快修改默认管理员密码（admin / 123456）。
+# ─────────────────────────────────────────────────────────────

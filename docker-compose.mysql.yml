@@ -1,23 +1,22 @@
-# SurveyKing（hanyuestar/surveyking fork v1.0.0）一键部署
+# SurveyKing（hanyuestar/surveyking fork v1.0.0）—— MySQL 部署
 #
-# 部署模式：
-#   方式一（推荐，本文件）：MySQL 8 + 应用，数据持久化三命名卷。
-#   方式二（H2 嵌入式体验，免安装数据库）：mvn clean package -DskipTests -Ph2 后
-#        java -jar server/api/target/surveyking-v1.0.0.jar
-#        数据/日志写入运行目录 ./db、./files、./logs；行政区字典由启动初始化器自动导入一次。
+# 适用场景：生产 / 多用户 / 数据量较大，使用 MySQL 8 作为数据库。
+# 对应「SQLite 体验版」请见同目录 docker-compose.sqlite.yml（免装数据库）。
 #
 # 用法：
-#   1.（可选，推荐）设置外挂密码：
+#   1. 在本仓库根目录执行（需先 clone 本仓库，MySQL 初始化脚本从仓库内挂载）：
+#        docker compose -f docker-compose.mysql.yml up -d
+#   2.（可选，推荐）部署前设置外挂密码：
 #        export GOD_SECRET='your-strong-secret'
-#   2. 本地先构建 Maven 产物（主构建）：
-#        cd server && mvn clean package -DskipTests -Ppro
-#      （产物位于 server/api/target/surveyking-v1.0.0.jar，Dockerfile 基于该产物打包）
-#   3. 一键启动：
-#        docker compose up -d
-#   4. 打开浏览器访问 http://localhost:1991 ，默认账号 admin / 123456
+#        docker compose -f docker-compose.mysql.yml up -d
+#   3. 打开浏览器访问 http://localhost:1991 ，默认账号 admin / 123456
+#
+# 镜像：直接从 Docker Hub 拉取已发布镜像 kyson666/surveyking:v1.0.0
+#      （如需自行构建可用本仓库 server/api/Dockerfile + CI 流程，无需在本文件 build）。
+#      国内若 Docker Hub 拉取慢，可改 ghcr.io/hanyuestar/surveyking:v1.0.0。
 #
 # 数据持久化：mysql-data（数据库）、app-files（上传文件）、app-logs（日志）
-#   删除/重建容器不丢数据；如需彻底清理：docker compose down -v
+#   删除/重建容器不丢数据；如需彻底清理：docker compose -f docker-compose.mysql.yml down -v
 #
 # godSecret 说明：
 #   - 仅部署时经环境变量 GOD_SECRET 注入，运行期不可修改（修改需重启容器）
@@ -50,13 +49,8 @@ services:
       start_period: 30s
 
   app:
-    build:
-      context: ./server
-      dockerfile: api/Dockerfile
-      args:
-        # Maven 主构建产物（server/api/target/surveyking-v1.0.0.jar）
-        JAR_FILE: "api/target/*.jar"
-    image: surveyking/surveyking:v1.0.0
+    # 当前 Docker Hub 已有 latest/main；v1.0.0 tag 需重推触发。临时用 latest 可直接跑通。
+    image: kyson666/surveyking:latest
     container_name: surveyking-app
     restart: unless-stopped
     ports:
