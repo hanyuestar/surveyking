@@ -39,8 +39,10 @@ services:
       FILE_STORAGE_LOCAL_ROOT_PATH: /app/files
       # 日志落盘到挂载点（Spring Boot 宽松绑定：LOGGING_FILE_PATH -> logging.file.path）
       LOGGING_FILE_PATH: /app/logs
-      # JVM 参数：堆内存 + 时区
-      JAVA_OPTS: "-Xmx512m -Duser.timezone=Asia/Shanghai"
+      # JVM 参数：堆内存 + 时区。
+      # 注：本 fork 的 H2 模式会在启动时导入约 91MB（未压缩）行政区字典；
+      # 已改为逐行流式导入避免 OOM，但 H2 + 66 万行字典仍需一定堆空间，故给 1g。
+      JAVA_OPTS: "-Xmx1g -Xms512m -Duser.timezone=Asia/Shanghai"
       # 外挂密码（可选）：部署时设置，运行期不可改；留空则关闭登录页钥匙按钮
       GOD_SECRET: ${GOD_SECRET:-}
     volumes:

@@ -6,16 +6,14 @@ import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.InputStreamResource;
-import org.springframework.core.io.support.EncodedResource;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.datasource.init.ScriptUtils;
 import org.springframework.stereotype.Component;
 
 import javax.sql.DataSource;
+import java.io.BufferedReader;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.sql.Connection;
 import java.util.zip.GZIPInputStream;
 
 /**
@@ -30,8 +28,14 @@ import java.util.zip.GZIPInputStream;
  * {@code dict_code='region'}，无则从 {@code classpath:scripts/data-region-dict.sql.gz}
  * 导入一次（脚本幂等：先 DELETE 后 INSERT），有则跳过。
  * <p>
- * 资源以 gzip 压缩存储（镜像/仓库瘦身，且 SQL 约 91MB 超过 GitHub 50MB 限制），
- * 此处先解压再交由 ScriptUtils 执行；显式指定 UTF-8 保证中文地名不乱码。
+ * 资源以 gzip 压缩存储（镜像/仓库瘦身；SQL 约 91MB 未压缩，gzip 后约 13.7MB 可入库），
+ * 此处先解压再逐行流式执行；显式指定 UTF-8 保证中文地名不乱码。
+ * <p>
+ * ⚠️ 内存关键点（曾导致容器 OOM 崩溃）：Spring 的 {@code ScriptUtils.executeSqlScript}
+ * 会把整个脚本一次性读入单个 String —— 91MB 脚本在堆里会变成约 182MB 的 char 数组，
+ * StringBuilder 扩容期峰值可达 ~360MB，512MB 堆必 OOM。因此这里改为「逐行读取 +
+ * 按 ';' 切分语句增量执行」，单条语句内存占用被限制在几百 KB（每个 INSERT 约 2000 行），
+ * 与堆大小无关，彻底消除 OOM。
  * <p>
  * MySQL 模式无需本类：docker-compose 通过挂载 data-region-dict.sql.gz 到
  * {@code /docker-entrypoint-initdb.d/}（MySQL 官方镜像原生支持 .sql.gz 自动解压）完成初始化。
@@ -69,17 +73,39 @@ public class RegionDictH2Initializer implements ApplicationRunner {
 
 			// data-region-dict.sql 为 MySQL 语法（反引号标识符），H2 MODE=MySQL 兼容；
 			// 文件为纯 INSERT/DELETE、无 BEGIN/COMMIT 事务包裹，逐条自动提交即可。
-			try (Connection connection = dataSource.getConnection();
-					InputStream raw = resource.getInputStream();
-					InputStream gz = new GZIPInputStream(raw)) {
-				connection.setAutoCommit(true);
-				EncodedResource encoded = new EncodedResource(new InputStreamResource(gz), StandardCharsets.UTF_8);
-				ScriptUtils.executeSqlScript(connection, encoded);
+			// 逐行流式读取 + 按 ';' 切分增量执行，避免整文件入内存导致 OOM。
+			try (InputStream raw = resource.getInputStream();
+					InputStream gz = new GZIPInputStream(raw);
+					BufferedReader reader = new BufferedReader(
+							new InputStreamReader(gz, StandardCharsets.UTF_8))) {
+				StringBuilder stmt = new StringBuilder();
+				String line;
+				while ((line = reader.readLine()) != null) {
+					String trimmed = line.trim();
+					// 跳过空行与 SQL 行注释（-- 开头），避免把注释拼进语句
+					if (trimmed.isEmpty() || trimmed.startsWith("--")) {
+						continue;
+					}
+					stmt.append(line).append('\n');
+					// 脚本中 ';' 仅作语句结束符，不会出现在数据值内，故可安全按 ';' 切分
+					if (trimmed.endsWith(";")) {
+						String sql = stmt.toString().trim();
+						if (sql.endsWith(";")) {
+							sql = sql.substring(0, sql.length() - 1);
+						}
+						if (!sql.isEmpty()) {
+							jdbcTemplate.execute(sql);
+						}
+						stmt.setLength(0);
+					}
+				}
 			}
 			log.info("Region dictionary imported into H2 (dict_code=region)");
 		}
-		catch (Exception ex) {
-			log.warn("RegionDictH2Initializer skipped: {}", ex.getMessage());
+		catch (Throwable ex) {
+			// 捕获一切异常/错误（含 OutOfMemoryError 等 Throwable），绝不让字典导入失败拖垮整个应用启动。
+			// 行政区字典缺失仅影响「地区选择」类题型，登录与主页等核心功能仍可正常使用。
+			log.warn("RegionDictH2Initializer skipped: {}", ex.toString());
 		}
 	}
 

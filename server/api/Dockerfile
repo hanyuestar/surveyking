@@ -9,6 +9,10 @@ COPY ${JAR_FILE} app.jar
 # 无需内嵌 H2 数据库，故移除该 COPY，避免构建失败。
 # COPY surveyking.mv.db surveyking.mv.db
 RUN mkdir /surveyking
+# 安装 fontconfig（内含 freetype 原生库）：AJ-Captcha 在无头容器里加载水印字体
+# 报 "Problem reading font data"，根因是缺少字体栅格化依赖，装 fontconfig 即可修复；
+# ttf-dejavu 提供基础西文字形（水印文本为英文 survey），避免登录验证码水印渲染异常。
+RUN apk add --no-cache fontconfig ttf-dejavu
 VOLUME /files
 VOLUME /logs
 ENTRYPOINT ["sh", "-c", "java ${JAVA_OPTS} -jar /app.jar ${0} ${@}"]
