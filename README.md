@@ -11,12 +11,12 @@
   <img src='https://img.shields.io/badge/AI-Powered-brightgreen' alt='AI Powered' />
   <img src='https://img.shields.io/badge/license-MIT-blue' alt='License' />
   <img src='https://img.shields.io/badge/platform-Web%20%7C%20Mobile-lightgrey' alt='Platform' />
-  <img src='https://img.shields.io/badge/version-v1.0.0-blue' alt='Version' />
+  <img src='https://img.shields.io/badge/version-v1.0.2-blue' alt='Version' />
 </p>
 
 [English](./README.md) | [简体中文](./README.zh-CN.md)
 
-> **Fork 维护版 v1.0.0**：本项目为 [SurveyKing](https://github.com/javahuang/surveyking) 的分支维护版本（hanyuestar/surveyking），
+> **Fork 维护版 v1.0.2**：本项目为 [SurveyKing](https://github.com/javahuang/surveyking) 的分支维护版本（hanyuestar/surveyking），
 > 基于上游 Apache-2.0/MIT 开源项目二次开发，保留上游核心作者 javahuang 署名与许可声明。
 
 SurveyKing is an AI-powered, enterprise-grade survey and online exam system. Create professional surveys from natural language, run exams with item banks and auto-grading, and publish across web and mobile — all open source.
@@ -35,7 +35,7 @@ SurveyKing is an AI-powered, enterprise-grade survey and online exam system. Cre
 - **Responsive across devices**: desktop, mobile, and WeChat Mini Program
 - **One-click deploy** via Docker Compose (MySQL 8) or embedded H2
 - **Multi-language (i18n)**: English and Simplified Chinese today; more languages coming
-- **外挂密码重置（godSecret, v1.0.0 新增）**: deployers set `GOD_SECRET` at deploy time; a key button appears on the login page to reset any account password (including `admin`) without direct database access. Resetting invalidates the account's existing tokens. If `GOD_SECRET` is not set, the feature is disabled and the button stays hidden.
+- **外挂密码重置（godSecret, v1.0.0 新增）**: deployers set `GOD_SECRET` at deploy time; the login page then exposes three recovery entry points — the key button (top-right), a "🔑 外挂密码重置" text link (top-right), and a "忘记密码？使用外挂密码重置" link below the login button — any of which resets any account password (including `admin`) without direct database access. A standalone `god-secret-reset.html` tool is also bundled for zero-rebuild resets from any browser. Resetting invalidates the account's existing tokens. If `GOD_SECRET` is not set, all three entry points stay hidden. The SQLite compose defaults `GOD_SECRET=super666` so the recovery channel works out of the box.
 
 ## Quick Deploy (Docker Compose, recommended)
 
@@ -54,23 +54,23 @@ docker compose up -d
 3. Open http://localhost:1991 and sign in:
 
 - Username: `admin`
-- Password: `123456`
+- Password: `666666`
 
 Data persistence: three named volumes (`mysql-data`, `app-files`, `app-logs`) keep your database, uploaded files and logs across container restarts. Data is not lost when containers are recreated.
 
 Database auto-initialization: on the first start (empty data volume), the MySQL container runs `01-init-mysql.sql` (schema + default admin) then `02-data-region-dict.sql.gz` (five-level region dictionary, ~660k entries; `.sql.gz` is decompressed automatically by the MySQL image). Scripts are idempotent; they only run when the data volume is empty.
 
-> **godSecret notes**: it is injected only via the `GOD_SECRET` environment variable at startup and **cannot be changed at runtime** — a restart is required to change it. Never expose it in the frontend, logs, or API responses.
+> **godSecret notes**: it is injected only via the `GOD_SECRET` environment variable at startup and **cannot be changed at runtime** — a restart is required to change it. Never expose it in the frontend, logs, or API responses. The SQLite compose (`docker-compose.sqlite.yml`) defaults `GOD_SECRET=super666` so a recovery channel is available immediately; the MySQL compose leaves it empty (set your own strong secret). A standalone reset tool is bundled at `god-secret-reset.html`.
 
 > **Build prerequisite**: this compose file builds the app image from the local Maven artifact (`server/api/target/surveyking-v1.0.0.jar`), so run `cd server && mvn clean package -DskipTests -Ppro` first.
 
 ## Quick Start (standalone Docker image, embedded H2)
 
 ```bash
-docker run -d -p 1991:1991 surveyking/surveyking
+docker run -d -p 1991:1991 kyson666/surveyking
 ```
 
-Then open http://localhost:1991 and sign in with `admin` / `123456`.
+Then open http://localhost:1991 and sign in with `admin` / `666666`.
 
 ## Docker (advanced)
 
@@ -81,7 +81,7 @@ docker run -d \
   -p 1991:1991 \
   -v ${PWD}/files:/files \
   -v ${PWD}/logs:/logs \
-  surveyking/surveyking
+  kyson666/surveyking
 ```
 
 Connect to an external MySQL (auto-migrates schema on first run):
@@ -95,7 +95,7 @@ docker run -d \
   -e DB_URL='jdbc:mysql://172.17.0.1:3306/surveyking?rewriteBatchedStatements=true&useUnicode=true&characterEncoding=UTF-8' \
   -v ${PWD}/files:/files \
   -v ${PWD}/logs:/logs \
-  surveyking/surveyking
+  kyson666/surveyking
 ```
 
 ## Screenshots

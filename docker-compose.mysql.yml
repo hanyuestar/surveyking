@@ -1,4 +1,4 @@
-# SurveyKing（hanyuestar/surveyking fork v1.0.0）—— MySQL 部署
+# SurveyKing（hanyuestar/surveyking fork v1.0.2）—— MySQL 部署
 #
 # 适用场景：生产 / 多用户 / 数据量较大，使用 MySQL 8 作为数据库。
 # 对应「SQLite 体验版」请见同目录 docker-compose.sqlite.yml（免装数据库）。
@@ -9,11 +9,11 @@
 #   2.（可选，推荐）部署前设置外挂密码：
 #        export GOD_SECRET='your-strong-secret'
 #        docker compose -f docker-compose.mysql.yml up -d
-#   3. 打开浏览器访问 http://localhost:1991 ，默认账号 admin / 123456
+#   3. 打开浏览器访问 http://localhost:1991 ，默认账号 admin / 666666
 #
-# 镜像：直接从 Docker Hub 拉取已发布镜像 kyson666/surveyking:v1.0.0
+# 镜像：直接从 Docker Hub 拉取已发布镜像 kyson666/surveyking:v1.0.2
 #      （如需自行构建可用本仓库 server/api/Dockerfile + CI 流程，无需在本文件 build）。
-#      国内若 Docker Hub 拉取慢，可改 ghcr.io/hanyuestar/surveyking:v1.0.0。
+#      国内若 Docker Hub 拉取慢，可改 ghcr.io/hanyuestar/surveyking:v1.0.2。
 #
 # 数据持久化：mysql-data（数据库）、app-files（上传文件）、app-logs（日志）
 #   删除/重建容器不丢数据；如需彻底清理：docker compose -f docker-compose.mysql.yml down -v
@@ -49,8 +49,8 @@ services:
       start_period: 30s
 
   app:
-    # 当前 Docker Hub 已有 latest/main；v1.0.0 tag 需重推触发。临时用 latest 可直接跑通。
-    image: kyson666/surveyking:latest
+    # v1.0.2 已发布（latest / v1.0.2 均可）；生产环境建议固定版本号以便回滚。
+    image: kyson666/surveyking:v1.0.2
     container_name: surveyking-app
     restart: unless-stopped
     ports:

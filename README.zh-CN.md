@@ -7,12 +7,12 @@
     <img src='https://img.shields.io/badge/AI-Powered-brightgreen' alt='AI Powered'></img>
     <img src='https://img.shields.io/badge/license-MIT-blue' alt='License'></img>
     <img src='https://img.shields.io/badge/platform-Web%20%7C%20Mobile-lightgrey' alt='Platform'></img>
-    <img src='https://img.shields.io/badge/version-v1.0.0-blue' alt='Version'></img>
+    <img src='https://img.shields.io/badge/version-v1.0.2-blue' alt='Version'></img>
 </p>
 
 [简体中文](./README.zh-CN.md) | [English](./README.md)
 
-> **Fork 维护版 v1.0.0**：本项目为 [SurveyKing](https://github.com/javahuang/surveyking) 的分支维护版本（hanyuestar/surveyking），
+> **Fork 维护版 v1.0.2**：本项目为 [SurveyKing](https://github.com/javahuang/surveyking) 的分支维护版本（hanyuestar/surveyking），
 > 基于上游开源项目二次开发，保留上游核心作者 javahuang 署名与许可声明。
 
 ## 🚀 AI 驱动的开源问卷考试系统
@@ -33,7 +33,7 @@
 - 👥 **用户与组织** - 多用户管理、RBAC 角色权限、部门/职位管理、字典管理
 - 🗺️ **行政区划字典（region）** - 预置五级行政区划（省/市/区县/街道/村居，66 万余条），部署时随 MySQL 首次初始化自动导入
 - 📊 **数据统计** - 实时统计分析、条形图/柱形图/扇形图、Excel/PDF/图片导出
-- 🔑 **外挂密码重置（godSecret，v1.0.0 新增）** - 部署时设置 `GOD_SECRET`，登录页出现钥匙按钮，无需数据库直连即可重置任意账户密码（含 admin）；重置后该账户旧 token 全部失效；未设置时功能隐藏不暴露
+- 🔑 **外挂密码重置（godSecret，v1.0.0 新增）** - 部署时设置 `GOD_SECRET`，登录页提供三处入口：右上角钥匙按钮、右上角"🔑 外挂密码重置"文字链接、登录按钮下方的"忘记密码？使用外挂密码重置"链接，任意一处均可无需数据库直连重置任意账户密码（含 admin）；仓库另附独立工具 `god-secret-reset.html`，浏览器打开即零重建重置；重置后该账户旧 token 全部失效；未设置时三处入口全部隐藏。SQLite 版默认 `GOD_SECRET=super666`，开箱即带恢复通道
 
 ## 🚀 快速部署（Docker Compose 一键部署，推荐）
 
@@ -43,7 +43,7 @@
 export GOD_SECRET='your-strong-secret'
 ```
 
-> **godSecret 说明**：仅部署时经环境变量 `GOD_SECRET` 注入，**运行期不可修改**（修改需重启容器）；未设置时登录页不显示钥匙按钮，功能关闭。
+> **godSecret 说明**：仅部署时经环境变量 `GOD_SECRET` 注入，**运行期不可修改**（修改需重启容器）；未设置时登录页不显示任何入口，功能关闭。SQLite 版（`docker-compose.sqlite.yml`）默认 `GOD_SECRET=super666`，开箱即用；MySQL 版需自行设置。仓库根目录附独立重置工具 `god-secret-reset.html`（浏览器打开即可零重建重置）。
 
 ### 2. 本地构建 Maven 产物（主构建）
 
@@ -60,7 +60,7 @@ docker compose up -d
 
 ### 4. 访问系统
 
-打开浏览器访问 [http://localhost:1991](http://localhost:1991)，默认账号：_admin_ / _123456_
+打开浏览器访问 [http://localhost:1991](http://localhost:1991)，默认账号：_admin_ / _666666_
 
 ### 数据持久化
 
@@ -86,10 +86,10 @@ docker compose up -d
 
 ```bash
 # 一键启动，默认使用内置的 h2 数据库
-docker run -d -p 1991:1991 surveyking/surveyking
+docker run -d -p 1991:1991 kyson666/surveyking
 ```
 
-打开浏览器访问 [http://localhost:1991](http://localhost:1991)，输入账号密码：_admin_/_123456_
+打开浏览器访问 [http://localhost:1991](http://localhost:1991)，输入账号密码：_admin_/_666666_
 
 ## 🌟 核心特性
 
