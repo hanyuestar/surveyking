@@ -98,11 +98,7 @@ jobs:
           flavor: |
             latest=true
           tags: |
-            # push tag v1.0.0 时生成 1.0.0 / 1.0 / 1 / latest（latest 由 flavor 控制）
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=semver,pattern={{major}}
-            # 保留原始 tag 名 v1.0.0，避免 semver 解析差异导致 tag 缺失
+            # push tag v1.0.0 时只生成 v1.0.0（保留原始 git tag 名），不再生成 1 / 1.0 / 1.0.0 等 semver 别名
             type=ref,event=tag
 
       - name: Build and push Docker images
