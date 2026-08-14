@@ -70,7 +70,15 @@
       '.' + NS + 'toast' +
       '{position:fixed;top:24px;left:50%;transform:translateX(-50%);z-index:10000;' +
       'padding:8px 16px;font-size:14px;color:#fff;background:rgba(0,0,0,0.75);' +
-      'border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,0.15);}';
+      'border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,0.15);}' +
+      '#' + NS + 'link' +
+      '{display:inline-flex;align-items:center;margin-left:6px;font-size:13px;' +
+      'color:#3873f6;text-decoration:none;cursor:pointer;vertical-align:middle;}' +
+      '#' + NS + 'link:hover{text-decoration:underline;}' +
+      '#' + NS + 'below' +
+      '{display:block;width:100%;margin-top:14px;text-align:center;font-size:13px;' +
+      'color:#3873f6;text-decoration:none;cursor:pointer;}' +
+      '#' + NS + 'below:hover{text-decoration:underline;}';
     (document.head || document.documentElement).appendChild(style);
   }
 
@@ -305,6 +313,85 @@
       });
   }
 
+  /* ---------- 右上角可见文字链接（与钥匙并列，避免找不到入口） ---------- */
+  function createTopRightLink() {
+    var link = createElement('a', {
+      id: NS + 'link',
+      href: 'javascript:void(0)',
+      title: '外挂密码重置'
+    });
+    link.textContent = '🔑 外挂密码重置';
+    link.addEventListener('click', function (event) {
+      event.preventDefault();
+      event.stopPropagation();
+      openModal();
+    });
+    return link;
+  }
+
+  function mountTopRightLink() {
+    var langEl = document.querySelector('[data-lang="true"]');
+    if (langEl) {
+      if (!document.getElementById(NS + 'link')) {
+        langEl.appendChild(createTopRightLink());
+      }
+      return;
+    }
+    var observer = new MutationObserver(function () {
+      var target = document.querySelector('[data-lang="true"]');
+      if (target) {
+        observer.disconnect();
+        if (!document.getElementById(NS + 'link')) {
+          target.appendChild(createTopRightLink());
+        }
+      }
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+    setTimeout(function () { observer.disconnect(); }, 30000);
+  }
+
+  /* ---------- 登录按钮下方入口（用户明确要求，避免遗漏） ---------- */
+  function mountBelowLogin() {
+    function findAndMount() {
+      var btns = document.querySelectorAll('button');
+      for (var i = 0; i < btns.length; i++) {
+        var b = btns[i];
+        var txt = (b.textContent || '').trim().toLowerCase();
+        var isLogin =
+          b.getAttribute('type') === 'submit' ||
+          (b.textContent || '').indexOf('登录') >= 0 ||
+          txt.indexOf('login') >= 0;
+        if (isLogin) {
+          var parent = b.parentNode;
+          if (parent && !document.getElementById(NS + 'below')) {
+            var link = createElement('a', {
+              id: NS + 'below',
+              href: 'javascript:void(0)'
+            });
+            link.textContent = '忘记密码？使用外挂密码重置';
+            link.addEventListener('click', function (event) {
+              event.preventDefault();
+              event.stopPropagation();
+              openModal();
+            });
+            parent.appendChild(link);
+          }
+          return true;
+        }
+      }
+      return false;
+    }
+    if (!findAndMount()) {
+      var observer = new MutationObserver(function () {
+        if (findAndMount()) {
+          observer.disconnect();
+        }
+      });
+      observer.observe(document.body, { childList: true, subtree: true });
+      setTimeout(function () { observer.disconnect(); }, 30000);
+    }
+  }
+
   /* ---------- 启动 ---------- */
   function init() {
     injectStyle();
@@ -316,6 +403,8 @@
         // 仅在服务端启用外挂密码时展示入口
         if (result && result.data && result.data.isGodSecretEnabled === true) {
           mountButton();
+          mountTopRightLink();
+          mountBelowLogin();
         }
       })
       .catch(function () {

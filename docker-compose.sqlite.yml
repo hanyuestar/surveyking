@@ -8,7 +8,7 @@
 # 用法：
 #   在本仓库根目录执行：
 #        docker compose -f docker-compose.sqlite.yml up -d
-#   访问 http://localhost:1991 ，默认账号 admin / 123456
+#   访问 http://localhost:1991 ，默认账号 admin / 666666
 #
 # 数据目录（相对本文件，可随意改路径）：
 #   ./files  上传文件    ./logs  日志    ./db   H2 数据库文件（surveyking.mv.db）
@@ -43,8 +43,10 @@ services:
       # 注：本 fork 的 H2 模式会在启动时导入约 91MB（未压缩）行政区字典；
       # 已改为逐行流式导入避免 OOM，但 H2 + 66 万行字典仍需一定堆空间，故给 1g。
       JAVA_OPTS: "-Xmx1g -Xms512m -Duser.timezone=Asia/Shanghai"
-      # 外挂密码（可选）：部署时设置，运行期不可改；留空则关闭登录页钥匙按钮
-      GOD_SECRET: ${GOD_SECRET:-}
+      # 外挂密码：部署时设置，运行期不可改；留空则关闭登录页钥匙按钮。
+      # 默认值 super666 让 fork 开箱即带「外挂密码重置」恢复通道（避免锁死）。
+      # 如需自定义：在同级 .env 写 GOD_SECRET=你的强密码，或用 export GOD_SECRET=... 注入。
+      GOD_SECRET: ${GOD_SECRET:-super666}
     volumes:
       - ./files:/app/files
       - ./logs:/app/logs
@@ -62,5 +64,5 @@ services:
 #   原有问卷数据不会迁移过来。
 #   正确做法：先备份旧 db 目录，清空后全新启动；如需保留旧数据，需另行做迁移，
 #   复杂度高，建议重头录入或保留旧容器并行使用。
-#   首次启动后请尽快修改默认管理员密码（admin / 123456）。
+#   首次启动后请尽快修改默认管理员密码（admin / 666666）。
 # ─────────────────────────────────────────────────────────────

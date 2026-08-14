@@ -26,7 +26,7 @@ CREATE TABLE `t_account` (
 -- Records of t_account
 -- ----------------------------
 BEGIN;
-INSERT INTO `t_account` (`id`, `user_type`, `user_id`, `auth_type`, `auth_account`, `auth_secret`, `secret_salt`, `status`, `is_deleted`, `create_at`, `create_by`, `update_at`, `update_by`) VALUES ('1', 'SysUser', '1457995481966747649', 'PWD', 'admin', '$2a$10$vZk9P3XtbD2KrdLbQYPvBuPAkkUda0OlkDg7io1Q6VEtfFPig/tqO', NULL, 1, 0, '2021-11-09 16:56:26', NULL, '2022-02-01 23:57:27', '1457995481966747649');
+INSERT INTO `t_account` (`id`, `user_type`, `user_id`, `auth_type`, `auth_account`, `auth_secret`, `secret_salt`, `status`, `is_deleted`, `create_at`, `create_by`, `update_at`, `update_by`) VALUES ('1', 'SysUser', '1457995481966747649', 'PWD', 'admin', '$2a$10$z77KkXgV2pbmbafS3DzG0e9/o9lpskz3bBh1k9pE1LUa7oUNaT13i', NULL, 1, 0, '2021-11-09 16:56:26', NULL, '2022-02-01 23:57:27', '1457995481966747649');
 COMMIT;
 
 -- ----------------------------
