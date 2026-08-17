@@ -146,7 +146,12 @@ public class SystemServiceImpl implements SystemService {
 	public SystemInfo.AiSetting getSystemAiSetting() {
 		// 数据库只有一条记录，id为1
 		SysInfo info = sysInfoMapper.selectById("1");
-		return info != null ? info.getAiSetting() : new SystemInfo.AiSetting();
+		// 当 sys_info 记录缺失或 ai_setting 列为 NULL 时返回空对象而非 null，
+		// 避免 @Cacheable 在 commonCache 不允许 null 时抛 IllegalArgumentException
+		if (info == null || info.getAiSetting() == null) {
+			return new SystemInfo.AiSetting();
+		}
+		return info.getAiSetting();
 	}
 
 	private void mergeSysInfo(SysInfo target, SystemInfoRequest request) {

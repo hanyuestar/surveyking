@@ -36,6 +36,6 @@ public interface SystemService {
 
 	void extractCodeDiffDbPermissions();
 
-	@Cacheable(value = CacheConsts.commonCacheName, key = "'aiInfo'")
+	@Cacheable(value = CacheConsts.commonCacheName, key = "'aiInfo'", unless = "#result == null")
 	SystemInfo.AiSetting getSystemAiSetting();
 }

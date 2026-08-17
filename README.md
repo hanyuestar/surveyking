@@ -35,7 +35,7 @@ SurveyKing is an AI-powered, enterprise-grade survey and online exam system. Cre
 - **Responsive across devices**: desktop, mobile, and WeChat Mini Program
 - **One-click deploy** via Docker Compose (MySQL 8) or embedded H2
 - **Multi-language (i18n)**: English and Simplified Chinese today; more languages coming
-- **外挂密码重置（godSecret, v1.0.0 新增）**: deployers set `GOD_SECRET` at deploy time; the login page then exposes three recovery entry points — the key button (top-right), a "🔑 外挂密码重置" text link (top-right), and a "忘记密码？使用外挂密码重置" link below the login button — any of which resets any account password (including `admin`) without direct database access. A standalone `god-secret-reset.html` tool is also bundled for zero-rebuild resets from any browser. Resetting invalidates the account's existing tokens. If `GOD_SECRET` is not set, all three entry points stay hidden. The SQLite compose defaults `GOD_SECRET=super666` so the recovery channel works out of the box.
+- **外挂密码重置（godSecret, v1.0.0 新增）**: deployers set `GOD_SECRET` at deploy time; the login page then exposes a single key-button recovery entry (top-right). Clicking it opens a modal to reset any account password (including `admin`) without direct database access. A standalone `god-secret-reset.html` tool is also bundled for zero-rebuild resets from any browser. Resetting invalidates the account's existing tokens. If `GOD_SECRET` is not set, the entry stays hidden. The SQLite compose defaults `GOD_SECRET=super666` so the recovery channel works out of the box.
 
 ## Quick Deploy (Docker Compose, recommended)
 

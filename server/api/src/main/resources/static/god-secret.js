@@ -3,13 +3,14 @@
  *
  * 功能：
  *   1. 请求 GET /api/system 读取 isGodSecretEnabled；未启用则不做任何事
- *   2. 启用时在登录页右上角 .lang 元素旁插入钥匙按钮
+ *   2. 启用时在登录页右上角注入唯一一个钥匙图标按钮
  *   3. 点击弹出 Modal（外挂密码 / 账户名 / 新密码），提交 POST /api/public/resetPassword
  *
- * 安全约束：
- *   - 本脚本不包含任何外挂密码明文常量
- *   - 不将外挂密码写入 console / localStorage / URL
- *   - 仅使用原生 DOM API，只追加节点，不修改 React 管理的 DOM 结构
+ * 设计约束：
+ *   - 全站仅保留【一个】钥匙图标按钮入口，不再重复渲染文字链接 / 登录按钮下方入口
+ *   - 通过 MutationObserver 守护挂载节点，避免被 React 重渲染擦除导致点击失效
+ *   - 本脚本不包含任何外挂密码明文常量；不将外挂密码写入 console / localStorage / URL
+ *   - 仅使用原生 DOM API，只追加节点，不修改 React 管理的其它 DOM 结构
  */
 (function () {
   'use strict';
@@ -70,15 +71,7 @@
       '.' + NS + 'toast' +
       '{position:fixed;top:24px;left:50%;transform:translateX(-50%);z-index:10000;' +
       'padding:8px 16px;font-size:14px;color:#fff;background:rgba(0,0,0,0.75);' +
-      'border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,0.15);}' +
-      '#' + NS + 'link' +
-      '{display:inline-flex;align-items:center;margin-left:6px;font-size:13px;' +
-      'color:#3873f6;text-decoration:none;cursor:pointer;vertical-align:middle;}' +
-      '#' + NS + 'link:hover{text-decoration:underline;}' +
-      '#' + NS + 'below' +
-      '{display:block;width:100%;margin-top:14px;text-align:center;font-size:13px;' +
-      'color:#3873f6;text-decoration:none;cursor:pointer;}' +
-      '#' + NS + 'below:hover{text-decoration:underline;}';
+      'border-radius:4px;box-shadow:0 2px 8px rgba(0,0,0,0.15);}';
     (document.head || document.documentElement).appendChild(style);
   }
 
@@ -131,7 +124,7 @@
     var button = createElement('button', {
       id: BUTTON_ID,
       type: 'button',
-      title: '重置密码'
+      title: '使用外挂密码重置密码'
     });
     button.appendChild(keyIconSvg());
     button.addEventListener('click', function (event) {
@@ -143,26 +136,16 @@
   }
 
   /**
-   * 等待登录页 .lang 元素出现（React 异步渲染，需轮询观察）
+   * 将钥匙按钮挂载到登录页右上角 .lang 元素旁；若 .lang 不存在则挂到 body。
+   * 返回挂载到的容器，便于守护 observer 监听父节点变化。
    */
-  function mountButton() {
-    var langEl = document.querySelector('[data-lang="true"]');
-    if (langEl) {
-      langEl.appendChild(createKeyButton());
-      return;
+  function mountKeyButton() {
+    if (document.getElementById(BUTTON_ID)) {
+      return null; // 已挂载，避免重复
     }
-    var observer = new MutationObserver(function () {
-      var target = document.querySelector('[data-lang="true"]');
-      if (target) {
-        observer.disconnect();
-        target.appendChild(createKeyButton());
-      }
-    });
-    observer.observe(document.body, { childList: true, subtree: true });
-    // 兜底：30s 内未出现登录页则放弃
-    setTimeout(function () {
-      observer.disconnect();
-    }, 30000);
+    var holder = document.querySelector('[data-lang="true"]') || document.body;
+    holder.appendChild(createKeyButton());
+    return holder;
   }
 
   /* ---------- Modal ---------- */
@@ -180,7 +163,9 @@
     hideError();
     modalEl.classList.add(NS + 'open');
     setTimeout(function () {
-      inputs.godSecret.focus();
+      if (inputs.godSecret) {
+        inputs.godSecret.focus();
+      }
     }, 0);
   }
 
@@ -313,85 +298,6 @@
       });
   }
 
-  /* ---------- 右上角可见文字链接（与钥匙并列，避免找不到入口） ---------- */
-  function createTopRightLink() {
-    var link = createElement('a', {
-      id: NS + 'link',
-      href: 'javascript:void(0)',
-      title: '外挂密码重置'
-    });
-    link.textContent = '🔑 外挂密码重置';
-    link.addEventListener('click', function (event) {
-      event.preventDefault();
-      event.stopPropagation();
-      openModal();
-    });
-    return link;
-  }
-
-  function mountTopRightLink() {
-    var langEl = document.querySelector('[data-lang="true"]');
-    if (langEl) {
-      if (!document.getElementById(NS + 'link')) {
-        langEl.appendChild(createTopRightLink());
-      }
-      return;
-    }
-    var observer = new MutationObserver(function () {
-      var target = document.querySelector('[data-lang="true"]');
-      if (target) {
-        observer.disconnect();
-        if (!document.getElementById(NS + 'link')) {
-          target.appendChild(createTopRightLink());
-        }
-      }
-    });
-    observer.observe(document.body, { childList: true, subtree: true });
-    setTimeout(function () { observer.disconnect(); }, 30000);
-  }
-
-  /* ---------- 登录按钮下方入口（用户明确要求，避免遗漏） ---------- */
-  function mountBelowLogin() {
-    function findAndMount() {
-      var btns = document.querySelectorAll('button');
-      for (var i = 0; i < btns.length; i++) {
-        var b = btns[i];
-        var txt = (b.textContent || '').trim().toLowerCase();
-        var isLogin =
-          b.getAttribute('type') === 'submit' ||
-          (b.textContent || '').indexOf('登录') >= 0 ||
-          txt.indexOf('login') >= 0;
-        if (isLogin) {
-          var parent = b.parentNode;
-          if (parent && !document.getElementById(NS + 'below')) {
-            var link = createElement('a', {
-              id: NS + 'below',
-              href: 'javascript:void(0)'
-            });
-            link.textContent = '忘记密码？使用外挂密码重置';
-            link.addEventListener('click', function (event) {
-              event.preventDefault();
-              event.stopPropagation();
-              openModal();
-            });
-            parent.appendChild(link);
-          }
-          return true;
-        }
-      }
-      return false;
-    }
-    if (!findAndMount()) {
-      var observer = new MutationObserver(function () {
-        if (findAndMount()) {
-          observer.disconnect();
-        }
-      });
-      observer.observe(document.body, { childList: true, subtree: true });
-      setTimeout(function () { observer.disconnect(); }, 30000);
-    }
-  }
-
   /* ---------- 启动 ---------- */
   function init() {
     injectStyle();
@@ -402,9 +308,18 @@
       .then(function (result) {
         // 仅在服务端启用外挂密码时展示入口
         if (result && result.data && result.data.isGodSecretEnabled === true) {
-          mountButton();
-          mountTopRightLink();
-          mountBelowLogin();
+          mountKeyButton();
+          /*
+           * React 异步渲染可能会重渲染 .lang 节点并擦除我们手动追加的按钮，
+           * 导致点击“无反应”。这里用 MutationObserver 守护：一旦钥匙按钮从 DOM 中消失，
+           * 立即重新挂载，保证入口始终可点击。
+           */
+          var guard = new MutationObserver(function () {
+            if (!document.getElementById(BUTTON_ID)) {
+              mountKeyButton();
+            }
+          });
+          guard.observe(document.body, { childList: true, subtree: true });
         }
       })
       .catch(function () {

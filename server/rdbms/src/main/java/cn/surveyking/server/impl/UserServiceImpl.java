@@ -251,7 +251,7 @@ public class UserServiceImpl extends BaseService<UserMapper, User> implements Us
 		// （前端只传 id + password）时生成空 SET 的非法 UPDATE SQL 导致 500
 		boolean userFieldChanged = request.getName() != null || request.getDeptId() != null
 				|| request.getPhone() != null || request.getEmail() != null || request.getAvatar() != null
-				|| request.getProfile() != null || request.getGender() != null || request.getBirthday() != null
+				|| request.getProfile() != null || request.getGender() != null
 				|| request.getStatus() != null || request.getCorrectTimes() != null;
 		if (userFieldChanged) {
 			User user = userViewMapper.fromRequest(request);
