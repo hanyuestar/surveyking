@@ -246,13 +246,25 @@ public class UserServiceImpl extends BaseService<UserMapper, User> implements Us
 		if (request.getId() == null) {
 			return;
 		}
-		User user = userViewMapper.fromRequest(request);
-		this.updateById(user);
+
+		// 仅当用户业务字段有变化时才更新 t_user 表，避免「仅重置密码」场景
+		// （前端只传 id + password）时生成空 SET 的非法 UPDATE SQL 导致 500
+		boolean userFieldChanged = request.getName() != null || request.getDeptId() != null
+				|| request.getPhone() != null || request.getEmail() != null || request.getAvatar() != null
+				|| request.getProfile() != null || request.getGender() != null || request.getBirthday() != null
+				|| request.getStatus() != null || request.getCorrectTimes() != null;
+		if (userFieldChanged) {
+			User user = userViewMapper.fromRequest(request);
+			this.updateById(user);
+		}
 
 		if (request.getStatus() != null || isNotBlank(request.getPassword())) {
 			// 更新登录账号
 			Account account = accountMapper
 				.selectOne(Wrappers.<Account>lambdaQuery().eq(Account::getUserId, request.getId()));
+			if (account == null) {
+				throw new ErrorCodeException(ErrorCode.UserNotFound);
+			}
 			if (isNotBlank(request.getPassword()) && isNotBlank(request.getOldPassword())) {
 				if (!passwordEncoder.matches(request.getOldPassword(), account.getAuthSecret())) {
 					throw new InternalServerError(i18n("user.password.invalid"));
