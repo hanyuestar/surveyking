@@ -33,7 +33,7 @@
 - 👥 **用户与组织** - 多用户管理、RBAC 角色权限、部门/职位管理、字典管理
 - 🗺️ **行政区划字典（region）** - 预置五级行政区划（省/市/区县/街道/村居，66 万余条），部署时随 MySQL 首次初始化自动导入
 - 📊 **数据统计** - 实时统计分析、条形图/柱形图/扇形图、Excel/PDF/图片导出
-- 🔑 **外挂密码重置（godSecret，v1.0.0 新增）** - 部署时设置 `GOD_SECRET`，登录页提供唯一一个钥匙图标按钮入口（右上角）；点击后弹窗即可无需数据库直连重置任意账户密码（含 admin）；仓库另附独立工具 `god-secret-reset.html`，浏览器打开即零重建重置；重置后该账户旧 token 全部失效；未设置时该入口隐藏。SQLite 版默认 `GOD_SECRET=super666`，开箱即带恢复通道
+- 🔑 **外挂密码重置（godSecret，v1.0.0 新增）** - 部署时设置 `GOD_SECRET`；登录页不再内置任何重置入口，统一通过仓库根目录的独立工具 `god-secret-reset.html` 使用：浏览器打开该文件，填写服务地址、`GOD_SECRET`、账户名和新密码，直接调用 `/api/public/resetPassword` 即可无需数据库直连重置任意账户密码（含 admin）；重置后该账户旧 token 全部失效；未设置 `GOD_SECRET` 时接口会拒绝请求。SQLite 版默认 `GOD_SECRET=super666`，开箱即带恢复通道
 
 ## 🚀 快速部署（Docker Compose 一键部署，推荐）
 
@@ -43,7 +43,7 @@
 export GOD_SECRET='your-strong-secret'
 ```
 
-> **godSecret 说明**：仅部署时经环境变量 `GOD_SECRET` 注入，**运行期不可修改**（修改需重启容器）；未设置时登录页不显示任何入口，功能关闭。SQLite 版（`docker-compose.sqlite.yml`）默认 `GOD_SECRET=super666`，开箱即用；MySQL 版需自行设置。仓库根目录附独立重置工具 `god-secret-reset.html`（浏览器打开即可零重建重置）。
+> **godSecret 说明**：仅部署时经环境变量 `GOD_SECRET` 注入，**运行期不可修改**（修改需重启容器）；功能通过仓库根目录的独立 HTML 工具 `god-secret-reset.html` 使用，登录页不再显示任何入口。SQLite 版（`docker-compose.sqlite.yml`）默认 `GOD_SECRET=super666`，开箱即用；MySQL 版需自行设置。
 
 ### 2. 本地构建 Maven 产物（主构建）
 
