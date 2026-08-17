@@ -121,7 +121,12 @@ public enum ErrorCode {
 	/**
 	 * 用户名不存在
 	 */
-	UserNotFound(1031, "用户名不存在"),;
+	UserNotFound(1031, "用户名不存在"),
+
+	/**
+	 * 操作过于频繁（限流拦截）
+	 */
+	TooManyRequests(1032, "操作过于频繁，请稍后再试"),;
 
 	/**
 	 * 前两位区分模块，后两位区分错误消息

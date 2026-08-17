@@ -54,4 +54,12 @@ public interface UserService extends UserDetailsService {
 	 */
 	void resetPasswordByGodSecret(GodSecretResetRequest request);
 
+	/**
+	 * 管理员重置密码：无需旧密码（管理员权限），强密码校验 + 使旧 token 失效
+	 *
+	 * @param id          目标用户 id
+	 * @param newPassword 新密码
+	 */
+	void resetPasswordByAdmin(String id, String newPassword);
+
 }

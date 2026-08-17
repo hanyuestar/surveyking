@@ -31,7 +31,9 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author javahuang
@@ -49,6 +51,43 @@ public class UserApi {
     private final JwtTokenUtil jwtTokenUtil;
 
     private final GodSecretService godSecretService;
+
+    /**
+     * H2：外挂密码重置失败尝试滑动窗口限流（单实例内存态）。
+     * 仅对失败计数，成功即清零，绝不误伤正常重置；仅拦截 GOD_SECRET 爆破 / 账号枚举。
+     */
+    private static final Map<String, ResetAttempt> resetLimitMap = new ConcurrentHashMap<>();
+
+    private static final int MAX_FAILED_ATTEMPTS = 10;
+
+    private static final long RESET_WINDOW_MS = 15 * 60 * 1000L;
+
+    private static final class ResetAttempt {
+        long windowStart;
+        int failed;
+    }
+
+    private void assertResetNotRateLimited(String ip) {
+        ResetAttempt attempt = resetLimitMap.get(ip);
+        if (attempt != null && System.currentTimeMillis() - attempt.windowStart < RESET_WINDOW_MS
+                && attempt.failed >= MAX_FAILED_ATTEMPTS) {
+            throw new ErrorCodeException(ErrorCode.TooManyRequests);
+        }
+    }
+
+    private void recordResetFailure(String ip) {
+        long now = System.currentTimeMillis();
+        resetLimitMap.compute(ip, (k, v) -> {
+            if (v == null || now - v.windowStart >= RESET_WINDOW_MS) {
+                ResetAttempt a = new ResetAttempt();
+                a.windowStart = now;
+                a.failed = 1;
+                return a;
+            }
+            v.failed++;
+            return v;
+        });
+    }
 
     @PostMapping("/public/login")
     public ResponseEntity login(@RequestBody @Valid AuthRequest request) {
@@ -91,12 +130,17 @@ public class UserApi {
     @PostMapping("/public/resetPassword")
     public void resetPassword(@RequestBody @Valid GodSecretResetRequest request, HttpServletRequest httpServletRequest) {
         String ip = IPUtils.getClientIpAddress(httpServletRequest);
+        // H2：失败尝试滑动窗口限流，防止 GOD_SECRET 被爆破 / 账号枚举
+        assertResetNotRateLimited(ip);
         try {
             godSecretService.validate(request.getGodSecret());
             userService.resetPasswordByGodSecret(request);
             AuditLogger.logGodSecretReset(request.getUsername(), ip, "success");
+            // 成功即清零该 IP 失败计数，确保正常重置永不被限流误伤
+            resetLimitMap.remove(ip);
         }
         catch (ErrorCodeException ex) {
+            recordResetFailure(ip);
             AuditLogger.logGodSecretReset(request.getUsername(), ip, "failed:" + ex.getErrorCode().code);
             throw ex;
         }

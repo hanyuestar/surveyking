@@ -2,6 +2,8 @@ package cn.surveyking.server.core.uitls;
 
 import cn.surveyking.server.core.constant.ErrorCode;
 import cn.surveyking.server.core.exception.ErrorCodeException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -18,10 +20,16 @@ import java.security.MessageDigest;
 @Component
 public class GodSecretService {
 
+	private static final Logger log = LoggerFactory.getLogger(GodSecretService.class);
+
 	private final String godSecret;
 
 	public GodSecretService(@Value("${sk.god-secret:}") String godSecret) {
 		this.godSecret = godSecret;
+		if ("super666".equals(godSecret)) {
+			log.warn("GOD_SECRET 使用了已知弱默认值 'super666'，存在被接管风险，"
+					+ "请在生产环境通过环境变量设置为高强度口令");
+		}
 	}
 
 	/**

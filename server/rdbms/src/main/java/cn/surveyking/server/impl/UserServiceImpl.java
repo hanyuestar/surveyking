@@ -258,29 +258,36 @@ public class UserServiceImpl extends BaseService<UserMapper, User> implements Us
 			this.updateById(user);
 		}
 
-		if (request.getStatus() != null || isNotBlank(request.getPassword())) {
-			// 更新登录账号
-			Account account = accountMapper
+		// 更新登录账号（用户名 / 状态 / 密码 各自独立处理，避免仅改用户名被静默丢弃，M3）
+		Account account = accountMapper
 				.selectOne(Wrappers.<Account>lambdaQuery().eq(Account::getUserId, request.getId()));
-			if (account == null) {
-				throw new ErrorCodeException(ErrorCode.UserNotFound);
+		if (account == null) {
+			throw new ErrorCodeException(ErrorCode.UserNotFound);
+		}
+		boolean accountChanged = false;
+		if (request.getUsername() != null) {
+			account.setAuthAccount(request.getUsername());
+			accountChanged = true;
+		}
+		if (request.getStatus() != null) {
+			account.setStatus(request.getStatus());
+			accountChanged = true;
+		}
+		if (isNotBlank(request.getPassword())) {
+			// M1：自助改密必须提供正确的旧密码（防会话劫持下无凭证改密）；
+			//     管理员改密走 resetPasswordByAdmin，不经此分支
+			if (!isNotBlank(request.getOldPassword())
+					|| !passwordEncoder.matches(request.getOldPassword(), account.getAuthSecret())) {
+				throw new InternalServerError(i18n("user.password.invalid"));
 			}
-			if (isNotBlank(request.getPassword()) && isNotBlank(request.getOldPassword())) {
-				if (!passwordEncoder.matches(request.getOldPassword(), account.getAuthSecret())) {
-					throw new InternalServerError(i18n("user.password.invalid"));
-				}
-			}
-			if (request.getUsername() != null) {
-				account.setAuthAccount(request.getUsername());
-			}
-			if (request.getStatus() != null) {
-				account.setStatus(request.getStatus());
-			}
-			if (isNotBlank(request.getPassword())) {
-				// 强密码校验：修改密码必须满足 8-16 位且包含大小写字母和数字
-				PasswordValidator.validate(request.getPassword());
-				account.setAuthSecret(passwordEncoder.encode(request.getPassword()));
-			}
+			// 强密码校验：修改密码必须满足 8-16 位且包含大小写字母和数字
+			PasswordValidator.validate(request.getPassword());
+			account.setAuthSecret(passwordEncoder.encode(request.getPassword()));
+			// M2：自增 token 版本号，使已签发的旧 token 立即失效（与 god-secret 路径一致）
+			account.setTokenVersion(account.getTokenVersion() == null ? 1 : account.getTokenVersion() + 1);
+			accountChanged = true;
+		}
+		if (accountChanged) {
 			accountMapper.updateById(account);
 		}
 
@@ -448,6 +455,22 @@ public class UserServiceImpl extends BaseService<UserMapper, User> implements Us
 		if (account.getStatus() != AppConsts.USER_STATUS.VALID) {
 			account.setStatus(AppConsts.USER_STATUS.VALID);
 		}
+		accountMapper.updateById(account);
+	}
+
+	@Override
+	@CacheEvict(cacheNames = "userCache", key = "#id")
+	public void resetPasswordByAdmin(String id, String newPassword) {
+		Account account = accountMapper
+				.selectOne(Wrappers.<Account>lambdaQuery().eq(Account::getUserId, id));
+		if (account == null) {
+			throw new ErrorCodeException(ErrorCode.UserNotFound);
+		}
+		// 强密码校验：管理员重置的新密码必须满足 8-16 位且包含大小写字母和数字
+		PasswordValidator.validate(newPassword);
+		// BCrypt 加密新密码并自增 token 版本号，使该账户已签发的所有旧 token 立即失效
+		account.setAuthSecret(passwordEncoder.encode(newPassword));
+		account.setTokenVersion(account.getTokenVersion() == null ? 1 : account.getTokenVersion() + 1);
 		accountMapper.updateById(account);
 	}
 

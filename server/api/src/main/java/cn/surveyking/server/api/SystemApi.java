@@ -17,6 +17,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import cn.surveyking.server.core.uitls.PasswordValidator;
+import org.apache.commons.lang3.StringUtils;
+
 /**
  * @author javahuang
  * @date 2021/10/12
@@ -165,6 +168,8 @@ public class SystemApi {
 	@PostMapping("/user/create")
 	@PreAuthorize("hasAuthority('system:user:create')")
 	public void createUser(@RequestBody @Validated(UserRequest.Create.class) UserRequest request) {
+		// M4：管理员创建用户强制强密码策略（导入走 importUser，使用默认弱密码，不受影响）
+		PasswordValidator.validate(request.getPassword());
 		userService.createUser(request);
 	}
 
@@ -176,6 +181,13 @@ public class SystemApi {
 	@PostMapping("/user/update")
 	@PreAuthorize("hasAuthority('system:user:update')")
 	public void updateUser(@RequestBody @Valid UserRequest request) {
+		// 管理员重置密码无需旧密码，走专用方法（同时使旧 token 失效）；
+		// 其余字段（用户名 / 状态 / 角色 / 岗位）仍走 updateUser
+		if (StringUtils.isNotBlank(request.getPassword())) {
+			userService.resetPasswordByAdmin(request.getId(), request.getPassword());
+			request.setPassword(null);
+			request.setOldPassword(null);
+		}
 		userService.updateUser(request);
 	}
 
