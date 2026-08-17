@@ -1,0 +1,470 @@
+[
+  {
+    "serialNo": "BUILTIN-001",
+    "name": "客户满意度调查",
+    "questionType": "Survey",
+    "mode": "survey",
+    "category": "满意度调查",
+    "tag": ["内置样例"],
+    "shared": 1,
+    "priority": 10,
+    "template": {
+      "id": "root",
+      "title": "客户满意度调查",
+      "description": "感谢您使用我们的产品/服务，请花 1 分钟为本次体验打分，您的反馈将帮助我们做得更好。",
+      "type": "Survey",
+      "attribute": { "mode": "survey" },
+      "children": [
+        {
+          "id": "q1",
+          "title": "您对我们的整体满意度",
+          "type": "Score",
+          "attribute": { "required": true, "scoreStyle": "star", "numericScale": 5 }
+        },
+        {
+          "id": "q2",
+          "title": "您最满意的是哪一方面？",
+          "type": "Radio",
+          "attribute": { "required": true },
+          "children": [
+            { "id": "q2_1", "type": "Option", "title": "产品质量" },
+            { "id": "q2_2", "type": "Option", "title": "服务态度" },
+            { "id": "q2_3", "type": "Option", "title": "价格性价比" },
+            { "id": "q2_4", "type": "Option", "title": "售后支持" }
+          ]
+        },
+        {
+          "id": "q3",
+          "title": "您希望我们优先改进哪些方面？（可多选）",
+          "type": "Checkbox",
+          "attribute": { "required": false },
+          "children": [
+            { "id": "q3_1", "type": "Option", "title": "响应速度" },
+            { "id": "q3_2", "type": "Option", "title": "产品功能" },
+            { "id": "q3_3", "type": "Option", "title": "价格体系" },
+            { "id": "q3_4", "type": "Option", "title": "使用体验" }
+          ]
+        },
+        {
+          "id": "q4",
+          "title": "其他建议或意见",
+          "type": "Textarea",
+          "attribute": { "required": false }
+        },
+        {
+          "id": "q5",
+          "title": "邮箱（选填，用于回访）",
+          "type": "FillBlank",
+          "attribute": { "required": false, "dataType": "email" }
+        }
+      ]
+    }
+  },
+  {
+    "serialNo": "BUILTIN-002",
+    "name": "活动/培训反馈问卷",
+    "questionType": "Survey",
+    "mode": "survey",
+    "category": "满意度调查",
+    "tag": ["内置样例"],
+    "shared": 1,
+    "priority": 11,
+    "template": {
+      "id": "root",
+      "title": "活动/培训反馈问卷",
+      "description": "本次活动的反馈对我们非常重要，请根据真实体验填写。",
+      "type": "Survey",
+      "attribute": { "mode": "survey" },
+      "children": [
+        {
+          "id": "q1",
+          "title": "您对本次活动的整体满意度",
+          "type": "Score",
+          "attribute": { "required": true, "scoreStyle": "star", "numericScale": 5 }
+        },
+        {
+          "id": "q2",
+          "title": "您认为本次活动的收获程度",
+          "type": "Radio",
+          "attribute": { "required": true },
+          "children": [
+            { "id": "q2_1", "type": "Option", "title": "收获很大" },
+            { "id": "q2_2", "type": "Option", "title": "有一定收获" },
+            { "id": "q2_3", "type": "Option", "title": "收获一般" },
+            { "id": "q2_4", "type": "Option", "title": "几乎没有收获" }
+          ]
+        },
+        {
+          "id": "q3",
+          "title": "您最喜欢哪个环节？（可多选）",
+          "type": "Checkbox",
+          "attribute": { "required": false },
+          "children": [
+            { "id": "q3_1", "type": "Option", "title": "主题分享" },
+            { "id": "q3_2", "type": "Option", "title": "互动讨论" },
+            { "id": "q3_3", "type": "Option", "title": "实操演练" },
+            { "id": "q3_4", "type": "Option", "title": "交流晚宴" }
+          ]
+        },
+        {
+          "id": "q4",
+          "title": "您希望下次活动关注的主题",
+          "type": "FillBlank",
+          "attribute": { "required": false }
+        }
+      ]
+    }
+  },
+  {
+    "serialNo": "BUILTIN-003",
+    "name": "活动报名表",
+    "questionType": "Survey",
+    "mode": "survey",
+    "category": "报名登记",
+    "tag": ["内置样例"],
+    "shared": 1,
+    "priority": 20,
+    "template": {
+      "id": "root",
+      "title": "活动报名表",
+      "description": "请填写以下信息完成报名，带 * 为必填项。",
+      "type": "Survey",
+      "attribute": { "mode": "survey" },
+      "children": [
+        {
+          "id": "q1",
+          "title": "姓名",
+          "type": "FillBlank",
+          "attribute": { "required": true }
+        },
+        {
+          "id": "q2",
+          "title": "手机号",
+          "type": "FillBlank",
+          "attribute": { "required": true, "dataType": "mobile" }
+        },
+        {
+          "id": "q3",
+          "title": "邮箱",
+          "type": "FillBlank",
+          "attribute": { "required": true, "dataType": "email" }
+        },
+        {
+          "id": "q4",
+          "title": "参会城市",
+          "type": "Select",
+          "attribute": { "required": true },
+          "dataSource": [
+            { "label": "北京", "value": "北京" },
+            { "label": "上海", "value": "上海" },
+            { "label": "广州", "value": "广州" },
+            { "label": "深圳", "value": "深圳" },
+            { "label": "其他", "value": "其他" }
+          ]
+        },
+        {
+          "id": "q5",
+          "title": "公司/单位（选填）",
+          "type": "FillBlank",
+          "attribute": { "required": false }
+        },
+        {
+          "id": "q6",
+          "title": "您最期待的议题（选填）",
+          "type": "Textarea",
+          "attribute": { "required": false }
+        }
+      ]
+    }
+  },
+  {
+    "serialNo": "BUILTIN-004",
+    "name": "人员信息登记表",
+    "questionType": "Survey",
+    "mode": "survey",
+    "category": "报名登记",
+    "tag": ["内置样例"],
+    "shared": 1,
+    "priority": 21,
+    "template": {
+      "id": "root",
+      "title": "人员信息登记表",
+      "description": "用于新员工或访客信息登记，信息仅用于内部管理。",
+      "type": "Survey",
+      "attribute": { "mode": "survey" },
+      "children": [
+        {
+          "id": "q1",
+          "title": "姓名",
+          "type": "FillBlank",
+          "attribute": { "required": true }
+        },
+        {
+          "id": "q2",
+          "title": "性别",
+          "type": "Select",
+          "attribute": { "required": true },
+          "dataSource": [
+            { "label": "男", "value": "男" },
+            { "label": "女", "value": "女" }
+          ]
+        },
+        {
+          "id": "q3",
+          "title": "出生日期",
+          "type": "FillBlank",
+          "attribute": { "required": false, "dataType": "date" }
+        },
+        {
+          "id": "q4",
+          "title": "手机号",
+          "type": "FillBlank",
+          "attribute": { "required": true, "dataType": "mobile" }
+        },
+        {
+          "id": "q5",
+          "title": "身份证号（选填）",
+          "type": "FillBlank",
+          "attribute": { "required": false, "dataType": "idCard" }
+        },
+        {
+          "id": "q6",
+          "title": "联系地址（选填）",
+          "type": "Textarea",
+          "attribute": { "required": false }
+        }
+      ]
+    }
+  },
+  {
+    "serialNo": "BUILTIN-005",
+    "name": "通用知识测验（自动判分）",
+    "questionType": "Survey",
+    "mode": "exam",
+    "category": "在线考试",
+    "tag": ["内置样例"],
+    "shared": 1,
+    "priority": 30,
+    "template": {
+      "id": "root",
+      "title": "通用知识测验",
+      "description": "本测验包含判断题、单选题与多选题，提交后系统自动判分。",
+      "type": "Survey",
+      "attribute": { "mode": "exam" },
+      "children": [
+        {
+          "id": "e1",
+          "title": "地球是太阳系中的一颗行星。",
+          "type": "Judge",
+          "attribute": {
+            "required": true,
+            "examScore": 10,
+            "examAnswerMode": "onlyOne",
+            "examAnalysis": "地球是太阳系的八大行星之一，表述正确。"
+          },
+          "children": [
+            { "id": "e1_1", "type": "Option", "title": "正确", "attribute": { "examCorrectAnswer": "正确" } },
+            { "id": "e1_2", "type": "Option", "title": "错误", "attribute": {} }
+          ]
+        },
+        {
+          "id": "e2",
+          "title": "中国的首都是哪座城市？",
+          "type": "Radio",
+          "attribute": {
+            "required": true,
+            "examScore": 10,
+            "examAnswerMode": "onlyOne",
+            "examAnalysis": "中华人民共和国的首都是北京。"
+          },
+          "children": [
+            { "id": "e2_1", "type": "Option", "title": "北京", "attribute": { "examCorrectAnswer": "北京" } },
+            { "id": "e2_2", "type": "Option", "title": "上海", "attribute": {} },
+            { "id": "e2_3", "type": "Option", "title": "广州", "attribute": {} }
+          ]
+        },
+        {
+          "id": "e3",
+          "title": "1 + 1 等于？",
+          "type": "Radio",
+          "attribute": {
+            "required": true,
+            "examScore": 10,
+            "examAnswerMode": "onlyOne",
+            "examAnalysis": "基础算术，1 加 1 等于 2。"
+          },
+          "children": [
+            { "id": "e3_1", "type": "Option", "title": "2", "attribute": { "examCorrectAnswer": "2" } },
+            { "id": "e3_2", "type": "Option", "title": "3", "attribute": {} },
+            { "id": "e3_3", "type": "Option", "title": "11", "attribute": {} }
+          ]
+        },
+        {
+          "id": "e4",
+          "title": "以下哪些是编程语言？（多选）",
+          "type": "Checkbox",
+          "attribute": {
+            "required": true,
+            "examScore": 20,
+            "examAnswerMode": "selectAll",
+            "examAnalysis": "Java、Python、C++ 均为编程语言；Photoshop 是图像处理软件。"
+          },
+          "children": [
+            { "id": "e4_1", "type": "Option", "title": "Java", "attribute": { "examCorrectAnswer": "Java" } },
+            { "id": "e4_2", "type": "Option", "title": "Python", "attribute": { "examCorrectAnswer": "Python" } },
+            { "id": "e4_3", "type": "Option", "title": "C++", "attribute": { "examCorrectAnswer": "C++" } },
+            { "id": "e4_4", "type": "Option", "title": "Photoshop", "attribute": {} }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "serialNo": "BUILTIN-006",
+    "name": "新员工入职培训考试",
+    "questionType": "Survey",
+    "mode": "exam",
+    "category": "在线考试",
+    "tag": ["内置样例"],
+    "shared": 1,
+    "priority": 31,
+    "template": {
+      "id": "root",
+      "title": "新员工入职培训考试",
+      "description": "请完成以下入职培训考核，满分 50 分，提交后自动判分。",
+      "type": "Survey",
+      "attribute": { "mode": "exam" },
+      "children": [
+        {
+          "id": "e1",
+          "title": "试用期最长不得超过 6 个月。",
+          "type": "Judge",
+          "attribute": {
+            "required": true,
+            "examScore": 10,
+            "examAnswerMode": "onlyOne",
+            "examAnalysis": "《劳动合同法》规定试用期最长不超过 6 个月，表述正确。"
+          },
+          "children": [
+            { "id": "e1_1", "type": "Option", "title": "正确", "attribute": { "examCorrectAnswer": "正确" } },
+            { "id": "e1_2", "type": "Option", "title": "错误", "attribute": {} }
+          ]
+        },
+        {
+          "id": "e2",
+          "title": "公司信息安全红线不包括以下哪项？",
+          "type": "Radio",
+          "attribute": {
+            "required": true,
+            "examScore": 15,
+            "examAnswerMode": "onlyOne",
+            "examAnalysis": "将个人账号借给他人使用属于违规，不在合规行为之列。"
+          },
+          "children": [
+            { "id": "e2_1", "type": "Option", "title": "不泄露客户数据", "attribute": {} },
+            { "id": "e2_2", "type": "Option", "title": "定期修改密码", "attribute": {} },
+            { "id": "e2_3", "type": "Option", "title": "将账号借给同事使用", "attribute": { "examCorrectAnswer": "将账号借给同事使用" } },
+            { "id": "e2_4", "type": "Option", "title": "离开工位锁屏", "attribute": {} }
+          ]
+        },
+        {
+          "id": "e3",
+          "title": "入职后必须完成的事项有哪些？（多选）",
+          "type": "Checkbox",
+          "attribute": {
+            "required": true,
+            "examScore": 25,
+            "examAnswerMode": "selectAll",
+            "examAnalysis": "签订劳动合同、参加安全培训、领取办公设备均为必须；私自拷贝代码不属于入职必须事项。"
+          },
+          "children": [
+            { "id": "e3_1", "type": "Option", "title": "签订劳动合同", "attribute": { "examCorrectAnswer": "签订劳动合同" } },
+            { "id": "e3_2", "type": "Option", "title": "参加安全培训", "attribute": { "examCorrectAnswer": "参加安全培训" } },
+            { "id": "e3_3", "type": "Option", "title": "领取办公设备", "attribute": { "examCorrectAnswer": "领取办公设备" } },
+            { "id": "e3_4", "type": "Option", "title": "私自拷贝公司代码", "attribute": {} }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "serialNo": "BUILTIN-007",
+    "name": "年度最佳员工投票",
+    "questionType": "Survey",
+    "mode": "survey",
+    "category": "投票评选",
+    "tag": ["内置样例"],
+    "shared": 1,
+    "priority": 40,
+    "template": {
+      "id": "root",
+      "title": "年度最佳员工投票",
+      "description": "请为您心目中的年度最佳员工投上宝贵的一票（单选）。",
+      "type": "Survey",
+      "attribute": { "mode": "survey" },
+      "children": [
+        {
+          "id": "q1",
+          "title": "请投票选出年度最佳员工",
+          "type": "Radio",
+          "attribute": { "required": true },
+          "children": [
+            { "id": "q1_1", "type": "Option", "title": "张三" },
+            { "id": "q1_2", "type": "Option", "title": "李四" },
+            { "id": "q1_3", "type": "Option", "title": "王五" },
+            { "id": "q1_4", "type": "Option", "title": "赵六" }
+          ]
+        },
+        {
+          "id": "q2",
+          "title": "推荐理由（选填）",
+          "type": "Textarea",
+          "attribute": { "required": false }
+        }
+      ]
+    }
+  },
+  {
+    "serialNo": "BUILTIN-008",
+    "name": "意见征集投票（多选）",
+    "questionType": "Survey",
+    "mode": "survey",
+    "category": "投票评选",
+    "tag": ["内置样例"],
+    "shared": 1,
+    "priority": 41,
+    "template": {
+      "id": "root",
+      "title": "意见征集投票",
+      "description": "您希望公司优先改善哪些方面？可多选。",
+      "type": "Survey",
+      "attribute": { "mode": "survey" },
+      "children": [
+        {
+          "id": "q1",
+          "title": "您希望公司优先改善以下哪些方面？（可多选）",
+          "type": "Checkbox",
+          "attribute": { "required": true },
+          "children": [
+            { "id": "q1_1", "type": "Option", "title": "食堂餐饮" },
+            { "id": "q1_2", "type": "Option", "title": "通勤班车" },
+            { "id": "q1_3", "type": "Option", "title": "培训体系" },
+            { "id": "q1_4", "type": "Option", "title": "团队建设" },
+            { "id": "q1_5", "type": "Option", "title": "办公环境" }
+          ]
+        },
+        {
+          "id": "q2",
+          "title": "您对公司整体满意度",
+          "type": "Radio",
+          "attribute": { "required": true },
+          "children": [
+            { "id": "q2_1", "type": "Option", "title": "满意" },
+            { "id": "q2_2", "type": "Option", "title": "一般" },
+            { "id": "q2_3", "type": "Option", "title": "不满意" }
+          ]
+        }
+      ]
+    }
+  }
+]
