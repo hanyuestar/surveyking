@@ -13,4 +13,7 @@ public class DashboardQuery {
 
 	private int type;
 
+	/** PRD-06：me=我的看板 / system=系统预置 / 空=全部 */
+	private String owner;
+
 }

@@ -2,11 +2,20 @@ package cn.surveyking.server.impl;
 
 import cn.surveyking.server.core.uitls.SchemaHelper;
 import cn.surveyking.server.domain.dto.ReportData;
+import cn.surveyking.server.domain.dto.ReportGroupData;
 import cn.surveyking.server.domain.dto.SurveySchema;
 import cn.surveyking.server.domain.model.Answer;
+import cn.surveyking.server.domain.model.Dept;
 import cn.surveyking.server.domain.model.Project;
+import cn.surveyking.server.domain.model.Role;
+import cn.surveyking.server.domain.model.User;
+import cn.surveyking.server.domain.model.UserRole;
 import cn.surveyking.server.mapper.AnswerMapper;
+import cn.surveyking.server.mapper.DeptMapper;
 import cn.surveyking.server.mapper.ProjectMapper;
+import cn.surveyking.server.mapper.RoleMapper;
+import cn.surveyking.server.mapper.UserMapper;
+import cn.surveyking.server.mapper.UserRoleMapper;
 import cn.surveyking.server.service.ReportService;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +38,14 @@ public class ReportServiceImpl implements ReportService {
 
 	private final ProjectMapper projectMapper;
 
+	private final UserMapper userMapper;
+
+	private final DeptMapper deptMapper;
+
+	private final RoleMapper roleMapper;
+
+	private final UserRoleMapper userRoleMapper;
+
 	@Override
 	public ReportData getData(String shortId) {
 		List<Answer> answerList = answerMapper.selectList(
@@ -50,6 +67,74 @@ public class ReportServiceImpl implements ReportService {
 			computeDailyAnswer(dailyCountStat, answer);
 		}
 		return result;
+	}
+
+	@Override
+	public ReportGroupData getGroupData(String shortId, String groupBy) {
+		List<Answer> answerList = answerMapper.selectList(
+				Wrappers.<Answer>lambdaQuery().select(Answer::getAnswer, Answer::getCreateBy, Answer::getProjectId)
+						.eq(Answer::getProjectId, shortId).orderByAsc(Answer::getCreateAt));
+		ReportGroupData result = new ReportGroupData();
+		result.setGroupBy(groupBy);
+		result.setTotal(answerList.size());
+		Map<String, ReportGroupData.Group> groupMap = new LinkedHashMap<>();
+		for (Answer answer : answerList) {
+			String groupKey = resolveGroupKey(answer.getCreateBy(), groupBy);
+			ReportGroupData.Group group = groupMap.computeIfAbsent(groupKey, k -> {
+				ReportGroupData.Group g = new ReportGroupData.Group();
+				g.setKey(k);
+				g.setLabel(resolveGroupLabel(k, groupBy));
+				g.setTotal(0);
+				g.setStatistics(new HashMap<>());
+				return g;
+			});
+			group.setTotal(group.getTotal() + 1);
+			parseAnswer(group.getStatistics(), answer.getAnswer());
+		}
+		result.setGroups(new ArrayList<>(groupMap.values()));
+		return result;
+	}
+
+	/**
+	 * 答卷人 → 分组键（PRD-06）
+	 */
+	private String resolveGroupKey(String createBy, String groupBy) {
+		if (createBy == null) {
+			return "unknown";
+		}
+		User user = userMapper.selectById(createBy);
+		if (user == null) {
+			return "unknown";
+		}
+		if ("dept".equalsIgnoreCase(groupBy)) {
+			return user.getDeptId() == null ? "unknown" : user.getDeptId();
+		}
+		if ("role".equalsIgnoreCase(groupBy)) {
+			List<UserRole> userRoles = userRoleMapper
+					.selectList(Wrappers.<UserRole>lambdaQuery().eq(UserRole::getUserId, createBy));
+			return userRoles.isEmpty() ? "unknown" : userRoles.get(0).getRoleId();
+		}
+		// position 或默认按用户
+		return createBy;
+	}
+
+	/**
+	 * 分组键 → 显示名（PRD-06）
+	 */
+	private String resolveGroupLabel(String key, String groupBy) {
+		if ("unknown".equals(key)) {
+			return "未知";
+		}
+		if ("dept".equalsIgnoreCase(groupBy)) {
+			Dept dept = deptMapper.selectById(key);
+			return dept == null ? key : dept.getName();
+		}
+		if ("role".equalsIgnoreCase(groupBy)) {
+			Role role = roleMapper.selectById(key);
+			return role == null ? key : role.getName();
+		}
+		User user = userMapper.selectById(key);
+		return user == null ? key : user.getName();
 	}
 
 	/**
