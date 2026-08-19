@@ -1780,4 +1780,20 @@ CREATE TABLE `t_publish_approval` (
   KEY `idx_approval_project` (`project_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='发布审批业务表';
 
+-- ----------------------------
+-- Table structure for t_tenant (PRD-11 多租户)
+-- ----------------------------
+CREATE TABLE `t_tenant` (
+  `id` varchar(64) NOT NULL COMMENT 'ID',
+  `name` varchar(64) NOT NULL COMMENT '租户名称',
+  `domain` varchar(64) DEFAULT NULL COMMENT '子域名',
+  `status` tinyint(1) NOT NULL DEFAULT '1' COMMENT '1启用 0停用',
+  `quota_user` int DEFAULT NULL COMMENT '用户数配额',
+  `quota_answer` int DEFAULT NULL COMMENT '答卷数配额',
+  `create_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `create_by` varchar(256) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_tenant_domain` (`domain`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='租户';
+
 SET FOREIGN_KEY_CHECKS = 1;

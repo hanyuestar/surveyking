@@ -3,6 +3,7 @@ package cn.surveyking.server.core.config;
 import cn.surveyking.server.core.security.ApiKeyFilter;
 import cn.surveyking.server.core.security.JwtTokenFilter;
 import cn.surveyking.server.core.security.RestAuthenticationEntryPoint;
+import cn.surveyking.server.core.tenant.TenantInterceptor;
 import cn.surveyking.server.service.UserService;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -38,14 +39,18 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
 	private final ApiKeyFilter apiKeyFilter;
 
+	private final TenantInterceptor tenantInterceptor;
+
 	private final UserService userService;
 
 	private final RestAuthenticationEntryPoint authenticationEntryPoint;
 
-	public WebSecurityConfig(JwtTokenFilter jwtTokenFilter, ApiKeyFilter apiKeyFilter, UserService userService,
+	public WebSecurityConfig(JwtTokenFilter jwtTokenFilter, ApiKeyFilter apiKeyFilter,
+			TenantInterceptor tenantInterceptor, UserService userService,
 			RestAuthenticationEntryPoint authenticationEntryPoint) {
 		this.jwtTokenFilter = jwtTokenFilter;
 		this.apiKeyFilter = apiKeyFilter;
+		this.tenantInterceptor = tenantInterceptor;
 		this.userService = userService;
 		this.authenticationEntryPoint = authenticationEntryPoint;
 		// 允许在 @Async 方法里面获取 SecurityContext
@@ -76,6 +81,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 				.antMatchers("/api/**").authenticated().antMatchers("/").permitAll();
 		http.addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class);
 		http.addFilterBefore(apiKeyFilter, JwtTokenFilter.class);
+		http.addFilterBefore(tenantInterceptor, ApiKeyFilter.class);
 	}
 
 	@Bean

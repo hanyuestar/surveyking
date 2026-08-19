@@ -912,4 +912,20 @@ CREATE TABLE IF NOT EXISTS t_publish_approval (
 CREATE INDEX IF NOT EXISTS idx_approval_status ON t_publish_approval (status);
 CREATE INDEX IF NOT EXISTS idx_approval_project ON t_publish_approval (project_id);
 
+-- ----------------------------
+-- Table structure for t_tenant (PRD-11 多租户)
+-- ----------------------------
+CREATE TABLE IF NOT EXISTS t_tenant (
+    id varchar(64) NOT NULL,
+    name varchar(64) NOT NULL,
+    domain varchar(64) DEFAULT NULL,
+    status tinyint(1) NOT NULL DEFAULT '1' COMMENT '1启用 0停用',
+    quota_user int DEFAULT NULL,
+    quota_answer int DEFAULT NULL,
+    create_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    create_by varchar(256) DEFAULT NULL,
+    PRIMARY KEY (id)
+    )  ;
+CREATE UNIQUE INDEX IF NOT EXISTS uk_tenant_domain ON t_tenant (domain);
+
 SET FOREIGN_KEY_CHECKS = 1;
