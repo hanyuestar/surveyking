@@ -1246,12 +1246,14 @@ CREATE TABLE `t_project` (
   `status` int DEFAULT '0' COMMENT '0未发布 1已发布',
   `mode` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '问卷模式',
   `priority` int DEFAULT '1000' COMMENT '优先级',
+  `dept_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT '所属部门(创建时取创建人部门,PRD-03 数据权限)',
   `is_deleted` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否删除',
   `create_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `create_by` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
   `update_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   `update_by` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  KEY `idx_project_dept` (`dept_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='项目';
 
 -- ----------------------------

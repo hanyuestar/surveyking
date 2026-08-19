@@ -35,6 +35,8 @@ sk:
       threshold: 5 # 连续失败 5 次触发锁定
       lock-minutes: 15 # 锁定 15 分钟
     retention-days: 180 # 日志保留天数，超过自动清理；<=0 不清理
+  data-perm: # PRD-03 部门数据权限
+    enabled: true # 是否按岗位 dataPermissionType 过滤部门数据，false 退化为全量可见
 flowable:
   async-executor-activate: false
   database-schema-update: false

@@ -699,6 +699,7 @@ ALTER TABLE t_answer ADD COLUMN IF NOT EXISTS temp_answer longtext DEFAULT NULL 
 ALTER TABLE t_project ADD COLUMN IF NOT EXISTS mode varchar(32) DEFAULT NULL COMMENT '问卷模式';
 ALTER TABLE t_project ADD COLUMN IF NOT EXISTS parent_id varchar(64) DEFAULT '0' COMMENT '父ID';
 ALTER TABLE t_project ADD COLUMN IF NOT EXISTS priority int DEFAULT 1000 COMMENT '优先级';
+ALTER TABLE t_project ADD COLUMN IF NOT EXISTS dept_id varchar(64) DEFAULT NULL COMMENT '所属部门(PRD-03 数据权限)';
 
 -- t_project_partner
 ALTER TABLE t_project_partner ADD COLUMN IF NOT EXISTS initial_value longtext DEFAULT NULL COMMENT '初始值';

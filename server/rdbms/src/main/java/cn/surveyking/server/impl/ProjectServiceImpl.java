@@ -10,9 +10,12 @@ import cn.surveyking.server.domain.dto.*;
 import cn.surveyking.server.domain.mapper.ProjectViewMapper;
 import cn.surveyking.server.domain.model.Answer;
 import cn.surveyking.server.domain.model.Project;
+import cn.surveyking.server.domain.model.User;
 import cn.surveyking.server.mapper.AnswerMapper;
 import cn.surveyking.server.mapper.ProjectMapper;
+import cn.surveyking.server.mapper.UserMapper;
 import cn.surveyking.server.service.BaseService;
+import cn.surveyking.server.service.DeptScopeService;
 import cn.surveyking.server.service.ProjectPartnerService;
 import cn.surveyking.server.service.ProjectService;
 import cn.surveyking.server.service.AuditLogService;
@@ -30,6 +33,7 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import static com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank;
 import static org.apache.commons.lang3.StringUtils.isBlank;
@@ -45,11 +49,15 @@ public class ProjectServiceImpl extends BaseService<ProjectMapper, Project> impl
 
     private final AnswerMapper answerMapper;
 
+    private final UserMapper userMapper;
+
     private final ProjectViewMapper projectViewMapper;
 
     private final ProjectPartnerService projectPartnerService;
 
     private final AuditLogService auditLogService;
+
+    private final DeptScopeService deptScopeService;
 
     private SpelExpressionParser spelParser = new SpelExpressionParser();
 
@@ -57,6 +65,10 @@ public class ProjectServiceImpl extends BaseService<ProjectMapper, Project> impl
 
     @Override
     public PaginationResponse<ProjectView> listProject(ProjectQuery query) {
+        String userId = SecurityContextUtils.getUserId();
+        // PRD-03：部门数据权限作用域（SELF/DEPT/DEPT_AND_SUB/ALL），ALL 或未启用时不追加过滤
+        Set<String> deptScope = deptScopeService.computeScope();
+        boolean deptFiltered = !deptScope.isEmpty() && !deptScope.contains(DeptScopeService.ALL);
         Page<Project> page = pageByQuery(query, Wrappers.<Project>lambdaQuery()
                 .like(isNotBlank(query.getName()), Project::getName, query.getName())
                 .eq(isNotBlank(query.getParentId()), Project::getParentId, query.getParentId())
@@ -65,7 +77,9 @@ public class ProjectServiceImpl extends BaseService<ProjectMapper, Project> impl
                         c -> c.isNull(Project::getParentId).or().eq(Project::getParentId, "0"))
                 .eq(query.getMode() != null, Project::getMode, query.getMode())
                 .exists("SELECT 1 FROM t_project_partner t WHERE t.type in (1, 2) AND t.user_id = {0} AND t.project_id = t_project.id",
-                        SecurityContextUtils.getUserId())
+                        userId)
+                // PRD-03：非 ALL 用户叠加部门可见范围（本人参与的项目不受影响，取并集）
+                .and(deptFiltered, c -> c.in(Project::getDeptId, deptScope))
                 // 文件夹排在前面，然后按创建时间从近到远排序
                 .last("ORDER BY CASE WHEN mode = 'folder' THEN 0 ELSE 1 END ASC, create_at DESC"));
         PaginationResponse<ProjectView> result = new PaginationResponse<>(page.getTotal(),
@@ -102,6 +116,13 @@ public class ProjectServiceImpl extends BaseService<ProjectMapper, Project> impl
         } else {
             project.setPriority(
                     count(Wrappers.<Project>lambdaQuery().ne(Project::getMode, ProjectModeEnum.folder)) + 1000);
+        }
+        // PRD-03：创建时记录所属部门（取创建人部门，用于部门数据权限过滤）
+        if (project.getDeptId() == null) {
+            User creator = userMapper.selectById(SecurityContextUtils.getUserId());
+            if (creator != null) {
+                project.setDeptId(creator.getDeptId());
+            }
         }
         save(project);
 

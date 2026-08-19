@@ -49,6 +49,11 @@ public class Project extends BaseModel {
 	 */
 	private Long priority;
 
+	/**
+	 * 所属部门（创建时取创建人部门，用于 PRD-03 部门数据权限过滤）
+	 */
+	private String deptId;
+
 	@TableField(fill = FieldFill.INSERT)
 	private Date createAt;
 
