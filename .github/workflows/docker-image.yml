@@ -21,6 +21,15 @@ jobs:
         run: |
           git describe --tags > VERSION 2>/dev/null || echo "0.0.0-dev" > VERSION
 
+      # 从 server/pom.xml 读取 revision（如 v1.0.9，finalName=surveyking-${revision}），
+      # 保证 tag 触发与 workflow_dispatch 两种场景的 jar 产物名都正确
+      - name: Extract revision from pom
+        id: ver
+        run: |
+          REV=$(sed -n 's/.*<revision>\(.*\)<\/revision>.*/\1/p' server/pom.xml | head -1)
+          echo "jar_version=${REV}" >> "$GITHUB_OUTPUT"
+          echo "revision=${REV}"
+
       # SurveyKing 是 Maven 多模块项目（Java 8），需要先构建 jar
       - name: Set up JDK 8
         uses: actions/setup-java@v3
@@ -66,7 +75,7 @@ jobs:
 
       - name: Verify jar exists
         run: |
-          ls -la server/api/target/surveyking-v1.0.0.jar
+          ls -la server/api/target/surveyking-${{ steps.ver.outputs.jar_version }}.jar
           echo "JAR OK"
 
       - name: Set up QEMU
@@ -113,4 +122,4 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
-            JAR_FILE=api/target/surveyking-v1.0.0.jar
+            JAR_FILE=api/target/surveyking-${{ steps.ver.outputs.jar_version }}.jar
