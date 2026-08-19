@@ -1,12 +1,16 @@
 package cn.surveyking.server.api;
 
 import cn.surveyking.server.core.common.PaginationResponse;
+import cn.surveyking.server.core.uitls.HTTPUtils;
 import cn.surveyking.server.core.uitls.SecurityContextUtils;
 import cn.surveyking.server.domain.dto.*;
 import cn.surveyking.server.service.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -40,6 +44,8 @@ public class SystemApi {
 	private final DictService dictService;
 
 	private final MessageSource messageSource;
+
+	private final AuditLogService auditLogService;
 
 	/**
 	 * @return 当前系统信息
@@ -430,6 +436,62 @@ public class SystemApi {
 	@PreAuthorize("hasAuthority('system:dictItem:delete')")
 	public void deleteDictItem(@RequestBody CommDictItemRequest request) {
 		dictService.deleteDictItem(request.getId());
+	}
+
+	/**
+	 * 分页查询操作审计日志（PRD-01）
+	 * 
+	 * @param query 查询条件
+	 * @return 分页结果
+	 */
+	@GetMapping("/audit-log")
+	@PreAuthorize("hasAuthority('system:audit:list')")
+	public PaginationResponse<AuditLogView> auditLog(AuditLogQuery query) {
+		return auditLogService.pageAuditLog(query);
+	}
+
+	/**
+	 * 导出操作审计日志 Excel（PRD-01）
+	 * 
+	 * @param query 查询条件
+	 * @return Excel 文件流
+	 */
+	@GetMapping("/audit-log/export")
+	@PreAuthorize("hasAuthority('system:audit:export')")
+	public ResponseEntity<Resource> exportAuditLog(AuditLogQuery query) {
+		DownloadData download = auditLogService.exportAuditLog(query);
+		return ResponseEntity.ok()
+				.header(HttpHeaders.CONTENT_DISPOSITION,
+						HTTPUtils.getContentDispositionValue(download.getFileName()))
+				.contentType(download.getMediaType()).body(download.getResource());
+	}
+
+	/**
+	 * 分页查询登录日志（PRD-01）
+	 * 
+	 * @param query 查询条件
+	 * @return 分页结果
+	 */
+	@GetMapping("/login-log")
+	@PreAuthorize("hasAuthority('system:audit:list')")
+	public PaginationResponse<LoginLogView> loginLog(LoginLogQuery query) {
+		return auditLogService.pageLoginLog(query);
+	}
+
+	/**
+	 * 导出登录日志 Excel（PRD-01）
+	 * 
+	 * @param query 查询条件
+	 * @return Excel 文件流
+	 */
+	@GetMapping("/login-log/export")
+	@PreAuthorize("hasAuthority('system:audit:export')")
+	public ResponseEntity<Resource> exportLoginLog(LoginLogQuery query) {
+		DownloadData download = auditLogService.exportLoginLog(query);
+		return ResponseEntity.ok()
+				.header(HttpHeaders.CONTENT_DISPOSITION,
+						HTTPUtils.getContentDispositionValue(download.getFileName()))
+				.contentType(download.getMediaType()).body(download.getResource());
 	}
 
 }

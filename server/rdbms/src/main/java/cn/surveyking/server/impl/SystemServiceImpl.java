@@ -12,6 +12,7 @@ import cn.surveyking.server.domain.model.SysInfo;
 import cn.surveyking.server.domain.model.UserRole;
 import cn.surveyking.server.mapper.SysInfoMapper;
 import cn.surveyking.server.mapper.UserRoleMapper;
+import cn.surveyking.server.service.AuditLogService;
 import cn.surveyking.server.service.SystemService;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -48,6 +49,8 @@ public class SystemServiceImpl implements SystemService {
 
 	private final GodSecretService godSecretService;
 
+	private final AuditLogService auditLogService;
+
 	@Override
 	public SystemInfo getSystemInfo() {
 		SystemInfo systemInfo = new SystemInfo();
@@ -79,6 +82,8 @@ public class SystemServiceImpl implements SystemService {
 		} else {
 			sysInfoMapper.insert(sysInfo);
 		}
+		// PRD-01：系统设置变更审计
+		auditLogService.record(buildSystemAudit("system", "update", "1", "更新系统设置"));
 	}
 
 	@Override
@@ -92,6 +97,8 @@ public class SystemServiceImpl implements SystemService {
 	@Override
 	public void createRole(RoleRequest request) {
 		roleService.save(roleViewMapper.fromRequest(request));
+		// PRD-01：创建角色审计
+		auditLogService.record(buildSystemAudit("role", "create", request.getId(), "创建角色「" + request.getName() + "」"));
 	}
 
 	@Override
@@ -111,6 +118,8 @@ public class SystemServiceImpl implements SystemService {
 		} else {
 			roleService.updateById(roleViewMapper.fromRequest(request));
 			evictCache(request.getId());
+			// PRD-01：更新角色审计
+			auditLogService.record(buildSystemAudit("role", "update", request.getId(), "更新角色「" + request.getName() + "」"));
 		}
 	}
 
@@ -119,6 +128,19 @@ public class SystemServiceImpl implements SystemService {
 		roleService.removeById(request.getId());
 		userRoleMapper.delete(Wrappers.<UserRole>lambdaQuery().eq(UserRole::getRoleId, request.getId()));
 		evictCache(request.getId());
+		// PRD-01：删除角色审计
+		auditLogService.record(buildSystemAudit("role", "delete", request.getId(), "删除角色「" + request.getName() + "」"));
+	}
+
+	private AuditLogRequest buildSystemAudit(String module, String action, String objectId, String detail) {
+		AuditLogRequest audit = new AuditLogRequest();
+		audit.setModule(module);
+		audit.setAction(action);
+		audit.setObjectType(module);
+		audit.setObjectId(objectId);
+		audit.setDetail(detail);
+		audit.setResult(1);
+		return audit;
 	}
 
 	/**

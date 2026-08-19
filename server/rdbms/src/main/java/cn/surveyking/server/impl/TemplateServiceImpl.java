@@ -9,6 +9,7 @@ import cn.surveyking.server.domain.model.Repo;
 import cn.surveyking.server.domain.model.Template;
 import cn.surveyking.server.domain.model.UserBook;
 import cn.surveyking.server.mapper.TemplateMapper;
+import cn.surveyking.server.service.AuditLogService;
 import cn.surveyking.server.service.BaseService;
 import cn.surveyking.server.service.TemplateService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -36,6 +37,8 @@ import static org.springframework.util.StringUtils.hasText;
 public class TemplateServiceImpl extends BaseService<TemplateMapper, Template> implements TemplateService {
 
     private final TemplateViewMapper templateViewMapper;
+
+    private final AuditLogService auditLogService;
 
     @Resource
     @Lazy
@@ -67,27 +70,43 @@ public class TemplateServiceImpl extends BaseService<TemplateMapper, Template> i
     public String addTemplate(TemplateRequest request) {
         Template template = templateViewMapper.fromRequest(request);
         save(template);
+        auditLogService.record(buildTemplateAudit(template.getId(), "create", "创建模板「" + template.getName() + "」"));
         return template.getId();
     }
 
     @Override
     public void batchAddTemplate(List<TemplateRequest> templateRequests) {
         saveBatch(templateViewMapper.fromRequest(templateRequests));
+        auditLogService.record(buildTemplateAudit(null, "create", "批量创建模板 " + templateRequests.size() + " 条"));
     }
 
     @Override
     public void batchUpdateTemplate(List<TemplateRequest> templateRequests) {
         updateBatchById(templateViewMapper.fromRequest(templateRequests));
+        auditLogService.record(buildTemplateAudit(null, "update", "批量更新模板 " + templateRequests.size() + " 条"));
     }
 
     @Override
     public void updateTemplate(TemplateRequest request) {
         updateById(templateViewMapper.fromRequest(request));
+        auditLogService.record(buildTemplateAudit(request.getId(), "update", "更新模板「" + request.getName() + "」"));
     }
 
     @Override
     public void deleteTemplate(TemplateRequest request) {
         removeBatchByIds(request.getIds());
+        auditLogService.record(buildTemplateAudit(String.join(",", request.getIds()), "delete", "删除模板 " + request.getIds().size() + " 条"));
+    }
+
+    private AuditLogRequest buildTemplateAudit(String templateId, String action, String detail) {
+        AuditLogRequest audit = new AuditLogRequest();
+        audit.setModule("template");
+        audit.setAction(action);
+        audit.setObjectType("template");
+        audit.setObjectId(templateId);
+        audit.setDetail(detail);
+        audit.setResult(1);
+        return audit;
     }
 
     @Override

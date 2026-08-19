@@ -15,6 +15,8 @@ import cn.surveyking.server.mapper.ProjectMapper;
 import cn.surveyking.server.service.BaseService;
 import cn.surveyking.server.service.ProjectPartnerService;
 import cn.surveyking.server.service.ProjectService;
+import cn.surveyking.server.service.AuditLogService;
+import cn.surveyking.server.domain.dto.AuditLogRequest;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.RequiredArgsConstructor;
@@ -46,6 +48,8 @@ public class ProjectServiceImpl extends BaseService<ProjectMapper, Project> impl
     private final ProjectViewMapper projectViewMapper;
 
     private final ProjectPartnerService projectPartnerService;
+
+    private final AuditLogService auditLogService;
 
     private SpelExpressionParser spelParser = new SpelExpressionParser();
 
@@ -106,7 +110,35 @@ public class ProjectServiceImpl extends BaseService<ProjectMapper, Project> impl
         partnerRequest.setProjectId(project.getId());
         partnerRequest.setUserIds(Collections.singletonList(SecurityContextUtils.getUserId()));
         projectPartnerService.addProjectPartner(partnerRequest);
+        // PRD-01：创建问卷/考试审计
+        auditLogService.record(buildAudit(project, "create", "创建" + modeName(project) + "「" + project.getName() + "」"));
         return projectViewMapper.toView(project);
+    }
+
+    private String modeName(Project project) {
+        return ProjectModeEnum.exam.equals(project.getMode()) ? "考试" : "问卷";
+    }
+
+    private AuditLogRequest buildAudit(Project project, String action, String detail) {
+        AuditLogRequest audit = new AuditLogRequest();
+        audit.setModule(ProjectModeEnum.exam.equals(project.getMode()) ? "exam" : "survey");
+        audit.setAction(action);
+        audit.setObjectType("project");
+        audit.setObjectId(project.getId());
+        audit.setDetail(detail);
+        audit.setResult(1);
+        return audit;
+    }
+
+    private AuditLogRequest buildAudit(String projectId, String action, String detail) {
+        AuditLogRequest audit = new AuditLogRequest();
+        audit.setModule("survey");
+        audit.setAction(action);
+        audit.setObjectType("project");
+        audit.setObjectId(projectId);
+        audit.setDetail(detail);
+        audit.setResult(1);
+        return audit;
     }
 
     private String generateProjectId() {
@@ -125,6 +157,7 @@ public class ProjectServiceImpl extends BaseService<ProjectMapper, Project> impl
     @SneakyThrows
     public void updateProject(ProjectRequest request) {
         synchronized (request.getId().intern()) {
+            Project oldProject = getById(request.getId());
             Project project = projectViewMapper.fromRequest(request);
             if (request.getSettingKey() != null) {
                 validateSettingKey(request.getSettingKey());
@@ -138,6 +171,15 @@ public class ProjectServiceImpl extends BaseService<ProjectMapper, Project> impl
                 }
             }
             updateById(project);
+            // PRD-01：编辑问卷/考试审计（含发布/暂停状态变更）
+            String action = "status".equals(request.getSettingKey()) ? "publish" : "update";
+            String detail = "status".equals(request.getSettingKey())
+                    ? (Integer) request.getSettingValue() == 1 ? "发布" : "暂停"
+                    : "编辑" + modeName(project) + "「" + project.getName() + "」";
+            if (oldProject != null) {
+                project.setMode(oldProject.getMode());
+            }
+            auditLogService.record(buildAudit(project, action, detail));
         }
     }
 
@@ -157,7 +199,12 @@ public class ProjectServiceImpl extends BaseService<ProjectMapper, Project> impl
 
     @Override
     public void deleteProject(ProjectRequest request) {
+        Project project = getById(request.getId());
         removeById(request.getId());
+        if (project != null) {
+            // PRD-01：删除问卷/考试审计
+            auditLogService.record(buildAudit(project, "delete", "删除" + modeName(project) + "「" + project.getName() + "」"));
+        }
     }
 
     @Override
@@ -185,11 +232,15 @@ public class ProjectServiceImpl extends BaseService<ProjectMapper, Project> impl
         ProjectPartnerRequest deletePartnerRequest = new ProjectPartnerRequest();
         deletePartnerRequest.setProjectIds(request.getIds());
         projectPartnerService.deleteProjectPartner(deletePartnerRequest);
+        // PRD-01：销毁问卷/考试审计
+        auditLogService.record(buildAudit(request.getIds().stream().findFirst().orElse(null), "delete", "彻底销毁问卷/考试"));
     }
 
     @Override
     public void restoreProject(ProjectRequest request) {
         getBaseMapper().restoreProject(request.getIds());
+        // PRD-01：恢复问卷/考试审计
+        auditLogService.record(buildAudit(request.getIds().stream().findFirst().orElse(null), "restore", "恢复问卷/考试"));
     }
 
     private <T> T merge(T local, T remote) throws IllegalAccessException, InstantiationException {

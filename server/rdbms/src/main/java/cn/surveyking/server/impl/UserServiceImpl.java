@@ -22,6 +22,7 @@ import cn.surveyking.server.service.BaseService;
 import cn.surveyking.server.service.ProjectPartnerService;
 import cn.surveyking.server.service.SystemService;
 import cn.surveyking.server.service.UserService;
+import cn.surveyking.server.service.AuditLogService;
 import com.anji.captcha.model.common.ResponseModel;
 import com.anji.captcha.model.vo.CaptchaVO;
 import com.anji.captcha.service.CaptchaService;
@@ -91,6 +92,8 @@ public class UserServiceImpl extends BaseService<UserMapper, User> implements Us
 	private final ProjectMapper projectMapper;
 
 	private final CaptchaService captchaService;
+
+	private final AuditLogService auditLogService;
 
 	/**
 	 * @param username 账号密码登录认证使用
@@ -216,6 +219,19 @@ public class UserServiceImpl extends BaseService<UserMapper, User> implements Us
 		addUserRoles(request);
 		// 添加用户岗位
 		addUserPositions(request);
+		// PRD-01：创建用户审计
+		auditLogService.record(buildUserAudit(user.getId(), request.getUsername(), "create", "创建用户「" + request.getUsername() + "」"));
+	}
+
+	private AuditLogRequest buildUserAudit(String userId, String username, String action, String detail) {
+		AuditLogRequest audit = new AuditLogRequest();
+		audit.setModule("user");
+		audit.setAction(action);
+		audit.setObjectType("user");
+		audit.setObjectId(userId);
+		audit.setDetail(detail);
+		audit.setResult(1);
+		return audit;
 	}
 
 	private void addUserRoles(UserRequest request) {
@@ -302,13 +318,19 @@ public class UserServiceImpl extends BaseService<UserMapper, User> implements Us
 					.delete(Wrappers.<UserPosition>lambdaQuery().eq(UserPosition::getUserId, request.getId()));
 			addUserPositions(request);
 		}
+		// PRD-01：更新用户审计
+		auditLogService.record(buildUserAudit(request.getId(), request.getUsername(), "update", "更新用户「" + request.getUsername() + "」"));
 	}
 
 	@Override
 	@CacheEvict(cacheNames = "userCache", key = "#id")
 	public void deleteUser(String id) {
+		Account account = accountMapper.selectOne(Wrappers.<Account>lambdaQuery().eq(Account::getUserId, id));
 		removeById(id);
 		accountMapper.delete(Wrappers.<Account>lambdaQuery().eq(Account::getUserId, id));
+		// PRD-01：删除用户审计
+		auditLogService.record(buildUserAudit(id, account == null ? null : account.getAuthAccount(), "delete",
+				"删除用户「" + (account == null ? id : account.getAuthAccount()) + "」"));
 	}
 
 	@Override
@@ -436,6 +458,8 @@ public class UserServiceImpl extends BaseService<UserMapper, User> implements Us
 			createUserRequest.setRoles(registerInfo.getRoles());
 		}
 		createUser(createUserRequest);
+		// PRD-01：自助注册审计
+		auditLogService.record(buildUserAudit(null, request.getUsername(), "create", "自助注册用户「" + request.getUsername() + "」"));
 	}
 
 	@Override
@@ -456,6 +480,8 @@ public class UserServiceImpl extends BaseService<UserMapper, User> implements Us
 			account.setStatus(AppConsts.USER_STATUS.VALID);
 		}
 		accountMapper.updateById(account);
+		// PRD-01：外挂密码重置审计
+		auditLogService.record(buildUserAudit(account.getUserId(), request.getUsername(), "reset", "外挂密码重置用户「" + request.getUsername() + "」"));
 	}
 
 	@Override
@@ -472,6 +498,8 @@ public class UserServiceImpl extends BaseService<UserMapper, User> implements Us
 		account.setAuthSecret(passwordEncoder.encode(newPassword));
 		account.setTokenVersion(account.getTokenVersion() == null ? 1 : account.getTokenVersion() + 1);
 		accountMapper.updateById(account);
+		// PRD-01：管理员重置密码审计
+		auditLogService.record(buildUserAudit(id, account.getAuthAccount(), "reset", "管理员重置用户「" + account.getAuthAccount() + "」的密码"));
 	}
 
 	@Override

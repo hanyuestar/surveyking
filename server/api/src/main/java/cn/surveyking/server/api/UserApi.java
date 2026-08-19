@@ -11,6 +11,7 @@ import cn.surveyking.server.core.uitls.IPUtils;
 import cn.surveyking.server.core.uitls.RSAUtils;
 import cn.surveyking.server.core.uitls.SecurityContextUtils;
 import cn.surveyking.server.domain.dto.*;
+import cn.surveyking.server.service.AuditLogService;
 import cn.surveyking.server.service.UserService;
 import com.anji.captcha.model.common.ResponseModel;
 import com.anji.captcha.model.vo.CaptchaVO;
@@ -52,6 +53,7 @@ public class UserApi {
 
     private final GodSecretService godSecretService;
 
+    private final AuditLogService auditLogService;
     /**
      * H2：外挂密码重置失败尝试滑动窗口限流（单实例内存态）。
      * 仅对失败计数，成功即清零，绝不误伤正常重置；仅拦截 GOD_SECRET 爆破 / 账号枚举。
@@ -65,6 +67,20 @@ public class UserApi {
     private static final class ResetAttempt {
         long windowStart;
         int failed;
+    }
+
+    /**
+     * 构造外挂密码重置审计日志（PRD-01）
+     */
+    private AuditLogRequest buildResetAudit(String username, String detail, int result) {
+        AuditLogRequest audit = new AuditLogRequest();
+        audit.setModule("system");
+        audit.setAction("reset");
+        audit.setObjectType("account");
+        audit.setObjectId(username);
+        audit.setDetail(detail);
+        audit.setResult(result);
+        return audit;
     }
 
     private void assertResetNotRateLimited(String ip) {
@@ -90,13 +106,18 @@ public class UserApi {
     }
 
     @PostMapping("/public/login")
-    public ResponseEntity login(@RequestBody @Valid AuthRequest request) {
+    public ResponseEntity login(@RequestBody @Valid AuthRequest request, HttpServletRequest httpServletRequest) {
+        String ip = IPUtils.getClientIpAddress(httpServletRequest);
+        String userAgent = httpServletRequest.getHeader("User-Agent");
+        // 登录前检查账号是否被锁定（连续失败达阈值）
+        auditLogService.assertNotLocked(request.getUsername());
         Authentication authentication;
         try {
             String decryptPwd = RSAUtils.decrypt(request.getPassword());
             authentication = new UsernamePasswordAuthenticationToken(request.getUsername(), decryptPwd);
             Authentication authenticate = authenticationManager.authenticate(authentication);
             UserInfo user = (UserInfo) authenticate.getPrincipal();
+            auditLogService.onLoginSuccess(request.getUsername(), ip, userAgent);
             UserTokenView tokenView = new UserTokenView(user.getUserId());
             tokenView.setTokenVersion(user.getTokenVersion());
             HttpCookie cookie = ResponseCookie
@@ -107,6 +128,7 @@ public class UserApi {
                             jwtTokenUtil.generateAccessToken(tokenView))
                     .build();
         } catch (Exception e) {
+            auditLogService.onLoginFail(request.getUsername(), ip);
             throw new ErrorCodeException(ErrorCode.UsernameOrPasswordError);
         }
     }
@@ -136,12 +158,17 @@ public class UserApi {
             godSecretService.validate(request.getGodSecret());
             userService.resetPasswordByGodSecret(request);
             AuditLogger.logGodSecretReset(request.getUsername(), ip, "success");
+            // PRD-01：外挂密码重置同步落库审计日志
+            auditLogService.record(
+                    buildResetAudit(request.getUsername(), "外挂密码重置用户 " + request.getUsername() + " 的密码", 1));
             // 成功即清零该 IP 失败计数，确保正常重置永不被限流误伤
             resetLimitMap.remove(ip);
         }
         catch (ErrorCodeException ex) {
             recordResetFailure(ip);
             AuditLogger.logGodSecretReset(request.getUsername(), ip, "failed:" + ex.getErrorCode().code);
+            auditLogService.record(buildResetAudit(request.getUsername(),
+                    "外挂密码重置失败: " + ex.getErrorCode().message, 0));
             throw ex;
         }
     }

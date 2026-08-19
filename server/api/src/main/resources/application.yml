@@ -29,6 +29,12 @@ sk:
   security:
     url-token-authentication:
       enabled: true # 默认开启 url token 认证
+  audit: # PRD-01 审计日志中心
+    enabled: true # 审计日志总开关
+    login-lock: # 登录失败锁定
+      threshold: 5 # 连续失败 5 次触发锁定
+      lock-minutes: 15 # 锁定 15 分钟
+    retention-days: 180 # 日志保留天数，超过自动清理；<=0 不清理
 flowable:
   async-executor-activate: false
   database-schema-update: false

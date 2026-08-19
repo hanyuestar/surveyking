@@ -66,6 +66,8 @@ public class AnswerServiceImpl extends ServiceImpl<AnswerMapper, Answer> impleme
 
     private final ProjectPartnerMapper projectPartnerMapper;
 
+    private final AuditLogService auditLogService;
+
     @Override
     public PaginationResponse<AnswerView> listAnswer(AnswerQuery query) {
         Page<Answer> page = new Page<>(query.getCurrent(), query.getPageSize());
@@ -236,6 +238,15 @@ public class AnswerServiceImpl extends ServiceImpl<AnswerMapper, Answer> impleme
     @Override
     public void deleteAnswer(AnswerRequest request) {
         super.removeByIds(request.getIds());
+        // PRD-01：删除答卷审计
+        AuditLogRequest audit = new AuditLogRequest();
+        audit.setModule("survey");
+        audit.setAction("delete");
+        audit.setObjectType("answer");
+        audit.setObjectId(String.join(",", request.getIds()));
+        audit.setDetail("删除答卷 " + request.getIds().size() + " 条");
+        audit.setResult(1);
+        auditLogService.record(audit);
     }
 
     @Override

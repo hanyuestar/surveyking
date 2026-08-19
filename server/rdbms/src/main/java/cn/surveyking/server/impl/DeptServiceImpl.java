@@ -4,11 +4,13 @@ import cn.surveyking.server.domain.dto.DeptRequest;
 import cn.surveyking.server.domain.dto.DeptView;
 import cn.surveyking.server.domain.dto.DeptSortRequest;
 import cn.surveyking.server.domain.dto.SelectDeptRequest;
+import cn.surveyking.server.domain.dto.AuditLogRequest;
 import cn.surveyking.server.domain.mapper.DeptDtoMapper;
 import cn.surveyking.server.domain.model.Dept;
 import cn.surveyking.server.domain.model.UserPosition;
 import cn.surveyking.server.mapper.DeptMapper;
 import cn.surveyking.server.mapper.UserPositionMapper;
+import cn.surveyking.server.service.AuditLogService;
 import cn.surveyking.server.service.BaseService;
 import cn.surveyking.server.service.DeptService;
 import cn.surveyking.server.service.UserService;
@@ -37,6 +39,8 @@ public class DeptServiceImpl extends BaseService<DeptMapper, Dept> implements De
 	private final UserService userService;
 
 	private final UserPositionMapper userPositionMapper;
+
+	private final AuditLogService auditLogService;
 
 	@Override
 	public List<DeptView> listDept(SelectDeptRequest request) {
@@ -68,17 +72,32 @@ public class DeptServiceImpl extends BaseService<DeptMapper, Dept> implements De
 		}
 		dept.setSortCode((int) count(Wrappers.<Dept>lambdaQuery().eq(Dept::getParentId, request.getParentId())));
 		save(dept);
+		auditLogService.record(buildDeptAudit(dept.getId(), "create", "创建部门「" + dept.getName() + "」"));
 	}
 
 	@Override
 	public void updateDept(DeptRequest request) {
 		updateById(deptDtoMapper.fromRequest(request));
+		auditLogService.record(buildDeptAudit(request.getId(), "update", "更新部门「" + request.getName() + "」"));
 	}
 
 	@Override
 	public void deleteDept(String id) {
+		Dept dept = getById(id);
 		removeById(id);
 		userPositionMapper.delete(Wrappers.<UserPosition>lambdaQuery().eq(UserPosition::getDeptId, id));
+		auditLogService.record(buildDeptAudit(id, "delete", "删除部门「" + (dept == null ? id : dept.getName()) + "」"));
+	}
+
+	private AuditLogRequest buildDeptAudit(String deptId, String action, String detail) {
+		AuditLogRequest audit = new AuditLogRequest();
+		audit.setModule("dept");
+		audit.setAction(action);
+		audit.setObjectType("dept");
+		audit.setObjectId(deptId);
+		audit.setDetail(detail);
+		audit.setResult(1);
+		return audit;
 	}
 
 	@Override
