@@ -1715,4 +1715,52 @@ CREATE TABLE `t_notification_record` (
   KEY `idx_notification_status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='通知发送记录';
 
+-- ----------------------------
+-- Table structure for t_webhook (PRD-09 开放集成)
+-- ----------------------------
+CREATE TABLE `t_webhook` (
+  `id` varchar(64) NOT NULL COMMENT 'ID',
+  `event` varchar(32) NOT NULL COMMENT '事件类型 ANSWER_SUBMITTED/EXAM_FINISHED/PROJECT_PUBLISHED...',
+  `url` varchar(512) NOT NULL COMMENT '回调地址',
+  `secret` varchar(256) NOT NULL COMMENT 'HMAC 签名密钥(加密存)',
+  `enabled` tinyint(1) NOT NULL DEFAULT '1' COMMENT '是否启用',
+  `create_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `create_by` varchar(256) DEFAULT NULL,
+  `update_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `update_by` varchar(256) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_webhook_event` (`event`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Webhook 订阅';
+
+-- ----------------------------
+-- Table structure for t_webhook_delivery (PRD-09 投递记录)
+-- ----------------------------
+CREATE TABLE `t_webhook_delivery` (
+  `id` varchar(64) NOT NULL COMMENT 'ID',
+  `webhook_id` varchar(64) NOT NULL COMMENT 'Webhook ID',
+  `event` varchar(32) NOT NULL COMMENT '事件',
+  `status` tinyint(1) NOT NULL DEFAULT '0' COMMENT '0待发 1成功 2失败',
+  `resp_code` int DEFAULT NULL COMMENT '接收方响应码',
+  `try_count` int NOT NULL DEFAULT '0' COMMENT '重试次数',
+  `payload` text COMMENT '请求体',
+  `create_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (`id`),
+  KEY `idx_webhook_delivery` (`webhook_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Webhook 投递记录';
+
+-- ----------------------------
+-- Table structure for t_api_key (PRD-09 开放 API Key)
+-- ----------------------------
+CREATE TABLE `t_api_key` (
+  `id` varchar(64) NOT NULL COMMENT 'ID',
+  `key_hash` varchar(128) NOT NULL COMMENT 'SHA-256 of key',
+  `name` varchar(64) NOT NULL COMMENT '名称',
+  `scope` varchar(255) NOT NULL COMMENT 'authority 列表',
+  `expired_at` datetime DEFAULT NULL COMMENT '过期时间',
+  `create_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `create_by` varchar(256) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_api_key_hash` (`key_hash`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='开放 API Key';
+
 SET FOREIGN_KEY_CHECKS = 1;

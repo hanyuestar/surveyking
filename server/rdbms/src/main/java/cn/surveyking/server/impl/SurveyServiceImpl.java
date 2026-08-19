@@ -10,6 +10,7 @@ import cn.surveyking.server.domain.mapper.ProjectViewMapper;
 import cn.surveyking.server.domain.model.*;
 import cn.surveyking.server.mapper.AnswerMapper;
 import cn.surveyking.server.mapper.ProjectPartnerMapper;
+import cn.surveyking.server.service.EventPublisher;
 import cn.surveyking.server.service.ProjectService;
 import cn.surveyking.server.service.SurveyService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -66,6 +67,8 @@ public class SurveyServiceImpl implements SurveyService {
     private final AnswerServiceImpl answerService;
 
     private final AnswerMapper answerMapper;
+
+    private final EventPublisher eventPublisher;
 
     private final ProjectPartnerMapper projectPartnerMapper;
 
@@ -288,6 +291,18 @@ public class SurveyServiceImpl implements SurveyService {
             Cookie cookie = new Cookie(randomSurveyCookieName, answerIdFromCookie);
             cookie.setMaxAge(0);
             ContextHelper.getCurrentHttpResponse().addCookie(cookie);
+        }
+        // PRD-09：事件发布（异步）
+        try {
+            if (ProjectModeEnum.exam.equals(project.getMode())) {
+                eventPublisher.publish("EXAM_FINISHED", result);
+            }
+            else {
+                eventPublisher.publish("ANSWER_SUBMITTED", result);
+            }
+        }
+        catch (Exception ex) {
+            log.warn("event publish failed: {}", ex.getMessage());
         }
         return result;
     }

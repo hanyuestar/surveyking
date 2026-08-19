@@ -1,5 +1,6 @@
 package cn.surveyking.server.core.config;
 
+import cn.surveyking.server.core.security.ApiKeyFilter;
 import cn.surveyking.server.core.security.JwtTokenFilter;
 import cn.surveyking.server.core.security.RestAuthenticationEntryPoint;
 import cn.surveyking.server.service.UserService;
@@ -35,13 +36,16 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
 	private final JwtTokenFilter jwtTokenFilter;
 
+	private final ApiKeyFilter apiKeyFilter;
+
 	private final UserService userService;
 
 	private final RestAuthenticationEntryPoint authenticationEntryPoint;
 
-	public WebSecurityConfig(JwtTokenFilter jwtTokenFilter, UserService userService,
+	public WebSecurityConfig(JwtTokenFilter jwtTokenFilter, ApiKeyFilter apiKeyFilter, UserService userService,
 			RestAuthenticationEntryPoint authenticationEntryPoint) {
 		this.jwtTokenFilter = jwtTokenFilter;
+		this.apiKeyFilter = apiKeyFilter;
 		this.userService = userService;
 		this.authenticationEntryPoint = authenticationEntryPoint;
 		// 允许在 @Async 方法里面获取 SecurityContext
@@ -66,8 +70,12 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
 		http.authorizeRequests().antMatchers("/api/public/**").permitAll().antMatchers("/api/system").permitAll()
 				.antMatchers("/captcha/get", "/captcha/check").permitAll().antMatchers(HttpMethod.GET, "/api/file/**")
-				.permitAll().antMatchers("/api/**").authenticated().antMatchers("/").permitAll();
+				.permitAll()
+				// PRD-09：开放接口走 API Key 过滤器（X-API-Key 头），不要求登录态
+				.antMatchers("/api/open/**").permitAll()
+				.antMatchers("/api/**").authenticated().antMatchers("/").permitAll();
 		http.addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class);
+		http.addFilterBefore(apiKeyFilter, JwtTokenFilter.class);
 	}
 
 	@Bean

@@ -847,4 +847,52 @@ CREATE TABLE IF NOT EXISTS t_notification_record (
 CREATE INDEX IF NOT EXISTS idx_notification_project ON t_notification_record (project_id);
 CREATE INDEX IF NOT EXISTS idx_notification_status ON t_notification_record (status);
 
+-- ----------------------------
+-- Table structure for t_webhook (PRD-09 开放集成)
+-- ----------------------------
+CREATE TABLE IF NOT EXISTS t_webhook (
+    id varchar(64) NOT NULL,
+    event varchar(32) NOT NULL COMMENT '事件类型',
+    url varchar(512) NOT NULL,
+    secret varchar(256) NOT NULL COMMENT 'HMAC 签名密钥(加密存)',
+    enabled tinyint(1) NOT NULL DEFAULT '1',
+    create_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    create_by varchar(256) DEFAULT NULL,
+    update_at timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+    update_by varchar(256) DEFAULT NULL,
+    PRIMARY KEY (id)
+    )  ;
+CREATE INDEX IF NOT EXISTS idx_webhook_event ON t_webhook (event);
+
+-- ----------------------------
+-- Table structure for t_webhook_delivery (PRD-09 投递记录)
+-- ----------------------------
+CREATE TABLE IF NOT EXISTS t_webhook_delivery (
+    id varchar(64) NOT NULL,
+    webhook_id varchar(64) NOT NULL,
+    event varchar(32) NOT NULL,
+    status tinyint(1) NOT NULL DEFAULT '0' COMMENT '0待发 1成功 2失败',
+    resp_code int DEFAULT NULL,
+    try_count int NOT NULL DEFAULT '0',
+    payload text DEFAULT NULL,
+    create_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id)
+    )  ;
+CREATE INDEX IF NOT EXISTS idx_webhook_delivery ON t_webhook_delivery (webhook_id);
+
+-- ----------------------------
+-- Table structure for t_api_key (PRD-09 开放 API Key)
+-- ----------------------------
+CREATE TABLE IF NOT EXISTS t_api_key (
+    id varchar(64) NOT NULL,
+    key_hash varchar(128) NOT NULL COMMENT 'SHA-256 of key',
+    name varchar(64) NOT NULL,
+    scope varchar(255) NOT NULL COMMENT 'authority 列表',
+    expired_at datetime DEFAULT NULL,
+    create_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    create_by varchar(256) DEFAULT NULL,
+    PRIMARY KEY (id)
+    )  ;
+CREATE UNIQUE INDEX IF NOT EXISTS uk_api_key_hash ON t_api_key (key_hash);
+
 SET FOREIGN_KEY_CHECKS = 1;

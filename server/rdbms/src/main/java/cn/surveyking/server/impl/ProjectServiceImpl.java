@@ -16,6 +16,7 @@ import cn.surveyking.server.mapper.ProjectMapper;
 import cn.surveyking.server.mapper.UserMapper;
 import cn.surveyking.server.service.BaseService;
 import cn.surveyking.server.service.DeptScopeService;
+import cn.surveyking.server.service.EventPublisher;
 import cn.surveyking.server.service.ProjectPartnerService;
 import cn.surveyking.server.service.ProjectService;
 import cn.surveyking.server.service.AuditLogService;
@@ -24,6 +25,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,6 +45,7 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
  * @date 2021/8/3
  */
 @Service
+@Slf4j
 @Transactional
 @RequiredArgsConstructor
 public class ProjectServiceImpl extends BaseService<ProjectMapper, Project> implements ProjectService {
@@ -58,6 +61,8 @@ public class ProjectServiceImpl extends BaseService<ProjectMapper, Project> impl
     private final AuditLogService auditLogService;
 
     private final DeptScopeService deptScopeService;
+
+    private final EventPublisher eventPublisher;
 
     private SpelExpressionParser spelParser = new SpelExpressionParser();
 
@@ -201,6 +206,18 @@ public class ProjectServiceImpl extends BaseService<ProjectMapper, Project> impl
                 project.setMode(oldProject.getMode());
             }
             auditLogService.record(buildAudit(project, action, detail));
+            // PRD-09：发布/撤回事件（异步）
+            try {
+                if ("publish".equals(action) && (Integer) request.getSettingValue() == 1) {
+                    eventPublisher.publish("PROJECT_PUBLISHED", Collections.singletonMap("projectId", project.getId()));
+                }
+                else if ("publish".equals(action)) {
+                    eventPublisher.publish("PROJECT_REVOKED", Collections.singletonMap("projectId", project.getId()));
+                }
+            }
+            catch (Exception ex) {
+                log.warn("project event publish failed: {}", ex.getMessage());
+            }
         }
     }
 
