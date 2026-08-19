@@ -26,6 +26,9 @@ public class Account extends BaseModel {
 	/** 认证账户 */
 	private String authAccount;
 
+	/** IdP 侧唯一标识（SSO 用户，PRD-02） */
+	private String extUid;
+
 	/** 密码 */
 	private String authSecret;
 

@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS t_account (
     user_id varchar(64) NOT NULL COMMENT '用户ID',
     auth_type varchar(20) NOT NULL DEFAULT 'PWD' COMMENT '认证方式',
     auth_account varchar(100) NOT NULL COMMENT '用户名',
+    ext_uid varchar(128) DEFAULT NULL COMMENT 'IdP侧唯一标识(SSO,PRD-02)',
     auth_secret varchar(64) DEFAULT NULL COMMENT '密码',
     secret_salt varchar(32) DEFAULT NULL COMMENT '加密盐',
     status int(11) NOT NULL DEFAULT '1' COMMENT '用户状态',
@@ -481,7 +482,7 @@ CREATE TABLE IF NOT EXISTS t_role (
 -- Records of t_role
 -- ----------------------------
 BEGIN;
-INSERT INTO t_role VALUES ('1457995481928998914', 'Admin', 'admin', '系统初始化角色', 'answer,answer:list,answer:detail,answer:create,answer:update,answer:delete,answer:export,file,file:detail,file:list,file:import,file:delete,project,project:list,project:detail,project:create,project:update,project:delete,project:report,system,system:role,system:role:list,system:user,system:user:list,system:role:create,system:role:update,system:role:delete,system:user:create,system:user:update,system:user:updatePosition,system:user:delete,position,position:list,position:create,system:position,system:position:update,system:position:delete,system:org,system:org:list,system:org:create,system:org:update,system:org:delete,template,template:list,template:create,template:update,template:delete,system:position:list,system:position:create,system:dept,system:dept:list,system:dept:create,system:dept:update,system:dept:delete,system:audit:list,system:audit:export,user:view-plain', 0, '2021-11-09 16:56:26', NULL, '2022-02-01 23:53:28', '1457995481966747649');
+INSERT INTO t_role VALUES ('1457995481928998914', 'Admin', 'admin', '系统初始化角色', 'answer,answer:list,answer:detail,answer:create,answer:update,answer:delete,answer:export,file,file:detail,file:list,file:import,file:delete,project,project:list,project:detail,project:create,project:update,project:delete,project:report,system,system:role,system:role:list,system:user,system:user:list,system:role:create,system:role:update,system:role:delete,system:user:create,system:user:update,system:user:updatePosition,system:user:delete,position,position:list,position:create,system:position,system:position:update,system:position:delete,system:org,system:org:list,system:org:create,system:org:update,system:org:delete,template,template:list,template:create,template:update,template:delete,system:position:list,system:position:create,system:dept,system:dept:list,system:dept:create,system:dept:update,system:dept:delete,system:audit:list,system:audit:export,user:view-plain,system:setting:list,system:setting:edit', 0, '2021-11-09 16:56:26', NULL, '2022-02-01 23:53:28', '1457995481966747649');
 INSERT INTO t_role VALUES ('1462366121347792897', '普通用户', 'role', NULL, 'answer,answer:export,answer:list,answer:detail,answer:create,answer:update,answer:delete,file,file:detail,file:import,file:list,file:delete,project,project:list,project:detail,project:create,project:update,project:delete,project:report,system,system:user,system:user:list,system:role,system:role:list,system:role:create,system:role:update,system:role:delete,system:user:create,system:user:update,system:user:updatePosition,system:user:delete,system:position,system:position:list,system:position:create,system:position:update,system:position:delete,system:org,system:org:list,system:org:create,system:org:update,system:org:delete,template,template:list,template:create,template:update,template:delete', 1, '2021-11-21 18:23:47', '1457995481966747649', '2022-01-27 14:08:14', '1457995481966747649');
 COMMIT;
 
@@ -687,6 +688,9 @@ COMMIT;
 -- t_user: 错题答对清除次数
 ALTER TABLE t_user ADD COLUMN IF NOT EXISTS correct_times int DEFAULT NULL COMMENT '错题答对清除次数';
 
+-- t_account: SSO 外部标识（PRD-02）
+ALTER TABLE t_account ADD COLUMN IF NOT EXISTS ext_uid varchar(128) DEFAULT NULL COMMENT 'IdP侧唯一标识(SSO,PRD-02)';
+
 -- t_answer: 考试 / 暂存相关字段
 ALTER TABLE t_answer ADD COLUMN IF NOT EXISTS exam_exercise_type varchar(4) DEFAULT NULL COMMENT '考试练习类型';
 ALTER TABLE t_answer ADD COLUMN IF NOT EXISTS exam_info longtext DEFAULT NULL COMMENT '考试信息';
@@ -766,5 +770,22 @@ CREATE TABLE IF NOT EXISTS t_account_lock (
     update_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '更新时间',
     PRIMARY KEY (username)
     )  ;
+
+-- ----------------------------
+-- Table structure for t_auth_provider (PRD-02 SSO/目录集成)
+-- ----------------------------
+CREATE TABLE IF NOT EXISTS t_auth_provider (
+    id varchar(64) NOT NULL,
+    type varchar(32) NOT NULL COMMENT 'LDAP/OIDC/WECHAT_WORK/DINGTALK/FEISHU',
+    enabled tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否启用',
+    auto_create tinyint(1) NOT NULL DEFAULT '1' COMMENT 'SSO首次登录自动建号',
+    config text DEFAULT NULL COMMENT 'JSON: url/baseDn/filter/ClientId/Secret/CorpId/AgentId...',
+    create_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    create_by varchar(256) DEFAULT NULL,
+    update_at timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    update_by varchar(256) DEFAULT NULL,
+    PRIMARY KEY (id)
+    )  ;
+CREATE UNIQUE INDEX IF NOT EXISTS uk_auth_provider_type ON t_auth_provider (type);
 
 SET FOREIGN_KEY_CHECKS = 1;

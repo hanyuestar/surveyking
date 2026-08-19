@@ -108,7 +108,18 @@ public class AppConsts {
 
 	public enum AUTH_TYPE {
 
-		PWD
+		/** 账号密码 */
+		PWD,
+		/** LDAP/AD 域认证 */
+		LDAP,
+		/** OIDC 授权码流 */
+		OIDC,
+		/** 企业微信扫码 */
+		WECHAT_WORK,
+		/** 钉钉扫码 */
+		DINGTALK,
+		/** 飞书扫码 */
+		FEISHU
 
 	}
 
