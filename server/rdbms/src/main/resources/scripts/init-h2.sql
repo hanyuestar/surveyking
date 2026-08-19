@@ -788,4 +788,41 @@ CREATE TABLE IF NOT EXISTS t_auth_provider (
     )  ;
 CREATE UNIQUE INDEX IF NOT EXISTS uk_auth_provider_type ON t_auth_provider (type);
 
+-- ----------------------------
+-- Table structure for t_project_notify_rule (PRD-05 分发与提醒规则)
+-- ----------------------------
+CREATE TABLE IF NOT EXISTS t_project_notify_rule (
+    id varchar(64) NOT NULL,
+    project_id varchar(64) NOT NULL,
+    target_group varchar(255) NOT NULL COMMENT 'D:deptId / R:roleCode / U:id,id',
+    channels varchar(128) NOT NULL COMMENT 'EMAIL,WECHAT_WORK_BOT',
+    remind_before_end int DEFAULT NULL COMMENT '截止前N天催办',
+    overdue_notify tinyint(1) NOT NULL DEFAULT '1' COMMENT '逾期是否提醒',
+    create_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    create_by varchar(256) DEFAULT NULL,
+    update_at timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    update_by varchar(256) DEFAULT NULL,
+    PRIMARY KEY (id)
+    )  ;
+CREATE INDEX IF NOT EXISTS idx_notify_rule_project ON t_project_notify_rule (project_id);
+
+-- ----------------------------
+-- Table structure for t_notification_record (PRD-05 通知发送记录)
+-- ----------------------------
+CREATE TABLE IF NOT EXISTS t_notification_record (
+    id varchar(64) NOT NULL,
+    project_id varchar(64) DEFAULT NULL,
+    channel varchar(32) NOT NULL,
+    receiver varchar(128) NOT NULL COMMENT '手机号/openid/email',
+    title varchar(255) DEFAULT NULL,
+    status tinyint(1) NOT NULL DEFAULT '0' COMMENT '0待发 1成功 2失败',
+    err_msg varchar(512) DEFAULT NULL,
+    sent_at datetime DEFAULT NULL,
+    create_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    create_by varchar(256) DEFAULT NULL,
+    PRIMARY KEY (id)
+    )  ;
+CREATE INDEX IF NOT EXISTS idx_notification_project ON t_notification_record (project_id);
+CREATE INDEX IF NOT EXISTS idx_notification_status ON t_notification_record (status);
+
 SET FOREIGN_KEY_CHECKS = 1;

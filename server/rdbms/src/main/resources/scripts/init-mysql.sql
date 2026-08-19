@@ -1656,4 +1656,41 @@ CREATE TABLE `t_auth_provider` (
   UNIQUE KEY `uk_auth_provider_type` (`type`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='认证提供方配置';
 
+-- ----------------------------
+-- Table structure for t_project_notify_rule (PRD-05 分发与提醒规则)
+-- ----------------------------
+CREATE TABLE `t_project_notify_rule` (
+  `id` varchar(64) NOT NULL COMMENT 'ID',
+  `project_id` varchar(64) NOT NULL COMMENT '项目ID',
+  `target_group` varchar(255) NOT NULL COMMENT 'D:deptId / R:roleCode / U:id,id',
+  `channels` varchar(128) NOT NULL COMMENT 'EMAIL,WECHAT_WORK_BOT',
+  `remind_before_end` int DEFAULT NULL COMMENT '截止前N天催办',
+  `overdue_notify` tinyint(1) NOT NULL DEFAULT '1' COMMENT '逾期是否提醒',
+  `create_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `create_by` varchar(256) DEFAULT NULL,
+  `update_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `update_by` varchar(256) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_notify_rule_project` (`project_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='项目分发与提醒规则';
+
+-- ----------------------------
+-- Table structure for t_notification_record (PRD-05 通知发送记录)
+-- ----------------------------
+CREATE TABLE `t_notification_record` (
+  `id` varchar(64) NOT NULL COMMENT 'ID',
+  `project_id` varchar(64) DEFAULT NULL COMMENT '项目ID',
+  `channel` varchar(32) NOT NULL COMMENT '渠道',
+  `receiver` varchar(128) NOT NULL COMMENT '手机号/openid/email',
+  `title` varchar(255) DEFAULT NULL COMMENT '标题',
+  `status` tinyint(1) NOT NULL DEFAULT '0' COMMENT '0待发 1成功 2失败',
+  `err_msg` varchar(512) DEFAULT NULL COMMENT '失败原因',
+  `sent_at` datetime DEFAULT NULL COMMENT '发送时间',
+  `create_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `create_by` varchar(256) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_notification_project` (`project_id`),
+  KEY `idx_notification_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='通知发送记录';
+
 SET FOREIGN_KEY_CHECKS = 1;

@@ -39,6 +39,8 @@ public class ProjectApi {
 
 	private final RepoService repoService;
 
+	private final NotifyService notifyService;
+
 	private final TagService tagService;
 
 	/**
@@ -268,6 +270,44 @@ public class ProjectApi {
 	@PostMapping("/selectTag")
 	public Set<String> selectTag(@RequestBody SelectTagRequest request) {
 		return tagService.selectTag(request);
+	}
+
+	// ==================== PRD-05 主动分发与催办 ====================
+
+	/**
+	 * 保存项目分发/提醒规则
+	 */
+	@PostMapping("/notify-rule")
+	@PreAuthorize("hasAuthority('project:update')")
+	public void saveNotifyRule(@RequestBody NotifyRuleRequest request) {
+		notifyService.saveRule(request);
+	}
+
+	/**
+	 * 查询项目分发/提醒规则列表
+	 */
+	@GetMapping("/notify-rule/list")
+	@PreAuthorize("hasAuthority('project:list')")
+	public List<NotifyRuleView> listNotifyRule(String projectId) {
+		return notifyService.listRules(projectId);
+	}
+
+	/**
+	 * 立即触发通知（未答人员）
+	 */
+	@PostMapping("/notify")
+	@PreAuthorize("hasAuthority('project:update')")
+	public void notify(@RequestBody NotifyNowRequest request) {
+		notifyService.notifyNow(request.getProjectId(), request.getChannels(), request.getMessage());
+	}
+
+	/**
+	 * 查询未答名单
+	 */
+	@GetMapping("/unanswered")
+	@PreAuthorize("hasAuthority('project:report')")
+	public UnansweredView unanswered(String projectId) {
+		return notifyService.unanswered(projectId);
 	}
 
 }
