@@ -8,6 +8,7 @@ import cn.surveyking.server.core.uitls.*;
 import cn.surveyking.server.domain.dto.*;
 import cn.surveyking.server.domain.mapper.ProjectViewMapper;
 import cn.surveyking.server.domain.model.*;
+import cn.surveyking.server.mapper.AnswerMapper;
 import cn.surveyking.server.mapper.ProjectPartnerMapper;
 import cn.surveyking.server.service.ProjectService;
 import cn.surveyking.server.service.SurveyService;
@@ -63,6 +64,8 @@ public class SurveyServiceImpl implements SurveyService {
     private final ProjectViewMapper projectViewMapper;
 
     private final AnswerServiceImpl answerService;
+
+    private final AnswerMapper answerMapper;
 
     private final ProjectPartnerMapper projectPartnerMapper;
 
@@ -262,6 +265,10 @@ public class SurveyServiceImpl implements SurveyService {
 
         // 保存答案
         request.setId(answerId);
+        // PRD-07：服务端时效与切屏复核（考试模式，服务端时间为准）
+        if (ProjectModeEnum.exam.equals(project.getMode()) && !ExerciseProjectTemplate.EXERCISE_PROJECT_ID.equals(projectId)) {
+            verifyExamSubmit(project, request, answerId);
+        }
         AnswerView answerView = answerService.saveAnswer(request);
         result.setAnswerId(answerView.getId());
         // 考试模式，计算分值传给前端
@@ -283,6 +290,49 @@ public class SurveyServiceImpl implements SurveyService {
             ContextHelper.getCurrentHttpResponse().addCookie(cookie);
         }
         return result;
+    }
+
+    /**
+     * PRD-07：服务端考试提交复核。
+     * 以服务端时间与 ExamSetting 为准校验：已截止 / 超时（maxSubmitMinutes）拒绝；
+     * 切屏次数（客户端上报 metaInfo）超过 maxSwitchScreenTimes 标记 cheat_flag=1；
+     * 服务端记录首答时间 server_start_time，防本地改时延长。
+     */
+    private void verifyExamSubmit(ProjectView project, AnswerRequest request, String answerId) {
+        ProjectSetting.ExamSetting examSetting = project.getSetting() == null ? null
+                : project.getSetting().getExamSetting();
+        if (examSetting == null) {
+            return;
+        }
+        long now = System.currentTimeMillis();
+        if (examSetting.getEndTime() != null && now > examSetting.getEndTime()) {
+            throw new ErrorCodeException(ErrorCode.ExamFinished);
+        }
+        // 服务端首答时间：无记录则本次提交即为首次
+        Answer existing = answerId == null ? null : answerMapper.selectById(answerId);
+        Date serverStart = existing == null ? null : existing.getServerStartTime();
+        if (serverStart == null) {
+            serverStart = new Date(now);
+        }
+        if (examSetting.getMaxSubmitMinutes() != null && examSetting.getMaxSubmitMinutes() > 0
+                && now - serverStart.getTime() > examSetting.getMaxSubmitMinutes() * 60 * 1000L) {
+            throw new ErrorCodeException(ErrorCode.ExamFinished);
+        }
+        // 切屏超限标记（客户端上报次数，服务端复核）
+        int switchTimes = 0;
+        if (request.getMetaInfo() != null && request.getMetaInfo().getAnswerInfo() != null
+                && request.getMetaInfo().getAnswerInfo().getSwitchScreenTimes() != null) {
+            switchTimes = request.getMetaInfo().getAnswerInfo().getSwitchScreenTimes();
+        }
+        if (examSetting.getMaxSwitchScreenTimes() != null && examSetting.getMaxSwitchScreenTimes() > 0
+                && switchTimes > examSetting.getMaxSwitchScreenTimes()) {
+            request.setCheatFlag(1);
+        }
+        // 回填服务端复核信息到答案（落库前）
+        request.setServerStartTime(serverStart);
+        if (request.getSwitchScreenTimes() == null) {
+            request.setSwitchScreenTimes(switchTimes);
+        }
     }
 
     /**

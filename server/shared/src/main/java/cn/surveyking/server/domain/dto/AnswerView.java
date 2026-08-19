@@ -59,4 +59,16 @@ public class AnswerView {
 
 	private String updateBy;
 
+	/** PRD-07：切屏次数 */
+	private Integer switchScreenTimes;
+
+	/** PRD-07：作弊标记（考官可见，1=异常） */
+	private Integer cheatFlag;
+
+	/** PRD-07：服务端首答时间 */
+	private Date serverStartTime;
+
+	/** PRD-07：补考批次（0=首考） */
+	private Integer retakeBatch;
+
 }

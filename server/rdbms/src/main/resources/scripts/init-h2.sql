@@ -698,6 +698,10 @@ ALTER TABLE t_answer ADD COLUMN IF NOT EXISTS exam_score float DEFAULT NULL COMM
 ALTER TABLE t_answer ADD COLUMN IF NOT EXISTS repo_id varchar(256) DEFAULT NULL COMMENT '所属题库';
 ALTER TABLE t_answer ADD COLUMN IF NOT EXISTS survey longtext DEFAULT NULL COMMENT '问卷';
 ALTER TABLE t_answer ADD COLUMN IF NOT EXISTS temp_answer longtext DEFAULT NULL COMMENT '暂存答案';
+ALTER TABLE t_answer ADD COLUMN IF NOT EXISTS switch_screen_times int DEFAULT 0 COMMENT '切屏次数(PRD-07)';
+ALTER TABLE t_answer ADD COLUMN IF NOT EXISTS cheat_flag tinyint(1) DEFAULT 0 COMMENT '作弊标记(PRD-07)';
+ALTER TABLE t_answer ADD COLUMN IF NOT EXISTS server_start_time datetime DEFAULT NULL COMMENT '服务端首答时间(PRD-07)';
+ALTER TABLE t_answer ADD COLUMN IF NOT EXISTS retake_batch int DEFAULT 0 COMMENT '补考批次 0=首考(PRD-07)';
 
 -- t_project
 ALTER TABLE t_project ADD COLUMN IF NOT EXISTS mode varchar(32) DEFAULT NULL COMMENT '问卷模式';
@@ -770,6 +774,24 @@ CREATE TABLE IF NOT EXISTS t_account_lock (
     update_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '更新时间',
     PRIMARY KEY (username)
     )  ;
+
+-- ----------------------------
+-- Table structure for t_exam_retake (PRD-07 补考配置)
+-- ----------------------------
+CREATE TABLE IF NOT EXISTS t_exam_retake (
+    id varchar(64) NOT NULL,
+    project_id varchar(64) NOT NULL,
+    max_retakes int NOT NULL DEFAULT '0' COMMENT '补考次数上限',
+    window_start datetime DEFAULT NULL COMMENT '补考窗口开始',
+    window_end datetime DEFAULT NULL COMMENT '补考窗口结束',
+    score_rule varchar(16) NOT NULL DEFAULT 'MAX' COMMENT '成绩规则 MAX/HIGHEST/LATEST',
+    create_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    create_by varchar(256) DEFAULT NULL,
+    update_at timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    update_by varchar(256) DEFAULT NULL,
+    PRIMARY KEY (id)
+    )  ;
+CREATE UNIQUE INDEX IF NOT EXISTS uk_exam_retake_project ON t_exam_retake (project_id);
 
 -- ----------------------------
 -- Table structure for t_auth_provider (PRD-02 SSO/目录集成)

@@ -26,6 +26,9 @@ public class AnswerMetaInfo {
 
 		private long endTime;
 
+		/** PRD-07：切屏次数（客户端上报） */
+		private Integer switchScreenTimes;
+
 	}
 
 	@Data

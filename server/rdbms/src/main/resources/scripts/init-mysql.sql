@@ -51,6 +51,10 @@ CREATE TABLE `t_answer` (
   `update_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   `update_by` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
   `repo_id` varchar(256) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL,
+  `switch_screen_times` int DEFAULT '0' COMMENT '切屏次数(PRD-07)',
+  `cheat_flag` tinyint(1) NOT NULL DEFAULT '0' COMMENT '作弊标记(PRD-07)',
+  `server_start_time` datetime DEFAULT NULL COMMENT '服务端首答时间(PRD-07)',
+  `retake_batch` int DEFAULT '0' COMMENT '补考批次 0=首考(PRD-07)',
   PRIMARY KEY (`id`) USING BTREE,
   KEY `key_answer_pid` (`project_id`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='答案';
@@ -1638,6 +1642,24 @@ CREATE TABLE `t_account_lock` (
   `update_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`username`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='账号登录失败锁定';
+
+-- ----------------------------
+-- Table structure for t_exam_retake (PRD-07 补考配置)
+-- ----------------------------
+CREATE TABLE `t_exam_retake` (
+  `id` varchar(64) NOT NULL COMMENT 'ID',
+  `project_id` varchar(64) NOT NULL COMMENT '项目ID',
+  `max_retakes` int NOT NULL DEFAULT '0' COMMENT '补考次数上限',
+  `window_start` datetime DEFAULT NULL COMMENT '补考窗口开始',
+  `window_end` datetime DEFAULT NULL COMMENT '补考窗口结束',
+  `score_rule` varchar(16) NOT NULL DEFAULT 'MAX' COMMENT '成绩规则 MAX/HIGHEST/LATEST',
+  `create_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `create_by` varchar(256) DEFAULT NULL,
+  `update_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `update_by` varchar(256) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_exam_retake_project` (`project_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='补考配置';
 
 -- ----------------------------
 -- Table structure for t_auth_provider (PRD-02 SSO/目录集成)
