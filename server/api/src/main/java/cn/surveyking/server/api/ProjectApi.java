@@ -41,6 +41,8 @@ public class ProjectApi {
 
 	private final NotifyService notifyService;
 
+	private final PublishApprovalService publishApprovalService;
+
 	private final TagService tagService;
 
 	/**
@@ -308,6 +310,18 @@ public class ProjectApi {
 	@PreAuthorize("hasAuthority('project:report')")
 	public UnansweredView unanswered(String projectId) {
 		return notifyService.unanswered(projectId);
+	}
+
+	// ==================== PRD-10 发布审批 ====================
+
+	/**
+	 * 申请发布（启用审批流时进入待审，未启用则直接发布）
+	 */
+	@PostMapping("/request-publish")
+	@PreAuthorize("hasAuthority('project:update')")
+	public Map<String, String> requestPublish(String projectId) {
+		String approvalId = publishApprovalService.requestPublish(projectId);
+		return java.util.Collections.singletonMap("approvalId", approvalId == null ? "" : approvalId);
 	}
 
 }

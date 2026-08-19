@@ -43,6 +43,8 @@ sk:
     mask-by-default: true # 列表/导出默认脱敏
   cache: # PRD-08 规模化基座：缓存类型（CAFFEINE 默认；REDIS 需引入 spring-boot-starter-data-redis 并配置 spring.redis.*）
     type: CAFFEINE
+  flow: # PRD-10 发布审批流：false=申请发布直接发布（默认，兼容旧行为）；true=进入待审批
+    enabled: false
 flowable:
   async-executor-activate: false
   database-schema-update: false

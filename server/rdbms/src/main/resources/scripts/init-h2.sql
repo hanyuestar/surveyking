@@ -895,4 +895,21 @@ CREATE TABLE IF NOT EXISTS t_api_key (
     )  ;
 CREATE UNIQUE INDEX IF NOT EXISTS uk_api_key_hash ON t_api_key (key_hash);
 
+-- ----------------------------
+-- Table structure for t_publish_approval (PRD-10 发布审批)
+-- ----------------------------
+CREATE TABLE IF NOT EXISTS t_publish_approval (
+    id varchar(64) NOT NULL,
+    project_id varchar(64) NOT NULL,
+    status varchar(16) NOT NULL DEFAULT 'PENDING' COMMENT 'PENDING/APPROVED/REJECTED',
+    applicant varchar(64) NOT NULL,
+    approver varchar(64) DEFAULT NULL,
+    opinion varchar(512) DEFAULT NULL,
+    create_at timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    decided_at datetime DEFAULT NULL,
+    PRIMARY KEY (id)
+    )  ;
+CREATE INDEX IF NOT EXISTS idx_approval_status ON t_publish_approval (status);
+CREATE INDEX IF NOT EXISTS idx_approval_project ON t_publish_approval (project_id);
+
 SET FOREIGN_KEY_CHECKS = 1;

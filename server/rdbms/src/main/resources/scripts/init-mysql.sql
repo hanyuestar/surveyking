@@ -1763,4 +1763,21 @@ CREATE TABLE `t_api_key` (
   UNIQUE KEY `uk_api_key_hash` (`key_hash`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='开放 API Key';
 
+-- ----------------------------
+-- Table structure for t_publish_approval (PRD-10 发布审批)
+-- ----------------------------
+CREATE TABLE `t_publish_approval` (
+  `id` varchar(64) NOT NULL COMMENT 'ID',
+  `project_id` varchar(64) NOT NULL COMMENT '项目ID',
+  `status` varchar(16) NOT NULL DEFAULT 'PENDING' COMMENT 'PENDING/APPROVED/REJECTED',
+  `applicant` varchar(64) NOT NULL COMMENT '申请人',
+  `approver` varchar(64) DEFAULT NULL COMMENT '审批人',
+  `opinion` varchar(512) DEFAULT NULL COMMENT '审批意见',
+  `create_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `decided_at` datetime DEFAULT NULL COMMENT '审批时间',
+  PRIMARY KEY (`id`),
+  KEY `idx_approval_status` (`status`),
+  KEY `idx_approval_project` (`project_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='发布审批业务表';
+
 SET FOREIGN_KEY_CHECKS = 1;
