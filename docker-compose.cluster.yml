@@ -1,0 +1,78 @@
+# PRD-08 规模化基座：多实例横向扩展编排（无状态 app × N + MySQL + MinIO + Redis）
+# 用法：
+#   docker compose -f docker-compose.cluster.yml up -d
+# 说明：
+#   - app 为无状态多副本（JWT 会话），任意实例故障不影响其他实例
+#   - 文件存储默认 LOCAL 挂载共享卷（多实例共享同一存储）；
+#     生产建议切 MinIO：app 环境变量 FILE_STORAGE__TYPE=MINIO + FILE_STORAGE__OBJECT_STORAGE__* 与 SK_ENCRYPT_KEY
+#   - 缓存默认 CAFFEINE 单实例内存；多实例如需共享缓存，引入 redis starter 后置 SK_CACHE__TYPE=REDIS
+#     （当前 fork 未打包 redis starter，本编排预留 redis 服务；启用前需在 server/pom.xml 加入依赖并重建镜像）
+#   - MySQL 为主库；H2 体验模式不支持多实例（本地文件库）。
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: change-me-root
+      MYSQL_DATABASE: surveyking
+      MYSQL_USER: survey
+      MYSQL_PASSWORD: change-me
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: change-me-minio
+    volumes:
+      - minio-data:/data
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --requirepass change-me-redis
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+
+  app:
+    image: kyson666/surveyking:v1.0.8 # 发布新版本后替换为对应 tag；多副本前需确保镜像含 redis starter（见文件头注释）
+    deploy:
+      replicas: 2
+    environment:
+      ACTIVE_PROFILE: pro
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/surveyking?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai
+      SPRING_DATASOURCE_USERNAME: survey
+      SPRING_DATASOURCE_PASSWORD: change-me
+      GOD_SECRET: ${GOD_SECRET:}
+      SK_ENCRYPT_KEY: ${SK_ENCRYPT_KEY:} # 生产必须显式注入，否则 PII 加密不可用
+      FILE_STORAGE__LOCAL__ROOT_PATH: /files
+      # 切 MinIO（生产推荐）：
+      # FILE_STORAGE__TYPE: MINIO
+      # FILE_STORAGE__OBJECT_STORAGE__ENDPOINT: http://minio:9000
+      # FILE_STORAGE__OBJECT_STORAGE__BUCKET: surveyking
+      # FILE_STORAGE__OBJECT_STORAGE__ACCESS_KEY: minioadmin
+      # FILE_STORAGE__OBJECT_STORAGE__SECRET_KEY: change-me-minio
+    volumes:
+      - shared-files:/files
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  mysql-data:
+  minio-data:
+  redis-data:
+  shared-files:

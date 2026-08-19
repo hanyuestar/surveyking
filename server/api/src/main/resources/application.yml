@@ -41,6 +41,8 @@ sk:
     enabled: false # 是否启用加密存储（生产置 true 并经环境变量注入 sk.encrypt.key）
     key: ${SK_ENCRYPT_KEY:} # 加密密钥口令，KMS/环境变量注入，禁止硬编码
     mask-by-default: true # 列表/导出默认脱敏
+  cache: # PRD-08 规模化基座：缓存类型（CAFFEINE 默认；REDIS 需引入 spring-boot-starter-data-redis 并配置 spring.redis.*）
+    type: CAFFEINE
 flowable:
   async-executor-activate: false
   database-schema-update: false

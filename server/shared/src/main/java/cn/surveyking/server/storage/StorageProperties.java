@@ -17,12 +17,38 @@ import java.io.File;
 public class StorageProperties {
 
 	/**
+	 * 存储类型（PRD-08）：LOCAL / MINIO / S3
+	 */
+	private String type = "LOCAL";
+
+	/**
 	 * 本次存储配置
 	 */
 	@NestedConfigurationProperty
 	private final LocalStorage local = new LocalStorage();
 
+	/** MinIO/S3 配置（type=MINIO/S3 时使用，PRD-08） */
+	@NestedConfigurationProperty
+	private final ObjectStorage objectStorage = new ObjectStorage();
+
 	public final ThumbImage thumbImage = new ThumbImage();
+
+	@Data
+	public static class ObjectStorage {
+
+		/** 端点（MinIO 如 http://minio:9000） */
+		private String endpoint;
+
+		/** bucket 名称 */
+		private String bucket;
+
+		/** access key */
+		private String accessKey;
+
+		/** secret key（经 Secret 注入，不入库） */
+		private String secretKey;
+
+	}
 
 	@Data
 	public class ThumbImage {
