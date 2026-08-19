@@ -10,6 +10,7 @@ import cn.surveyking.server.core.exception.InternalServerError;
 import cn.surveyking.server.core.security.PasswordEncoder;
 import cn.surveyking.server.core.uitls.ContextHelper;
 import cn.surveyking.server.core.uitls.PasswordValidator;
+import cn.surveyking.server.core.uitls.PiiMaskUtil;
 import cn.surveyking.server.core.uitls.PinyinUtils;
 import cn.surveyking.server.core.uitls.SecurityContextUtils;
 import cn.surveyking.server.domain.dto.*;
@@ -171,6 +172,12 @@ public class UserServiceImpl extends BaseService<UserMapper, User> implements Us
 					.selectOne(Wrappers.<Account>lambdaQuery().eq(Account::getUserId, x.getId()));
 			userView.setUsername(account.getAuthAccount());
 			userView.setStatus(account.getStatus());
+			// PRD-04：列表默认脱敏手机号/邮箱（有 user:view-plain 权限才显示明文）
+			boolean plainAllowed = hasPlainAuthority();
+			if (!plainAllowed) {
+				userView.setPhone(PiiMaskUtil.maskMobile(userView.getPhone()));
+				userView.setEmail(PiiMaskUtil.maskEmail(userView.getEmail()));
+			}
 			// 设置用户部门
 			Dept dept = deptMapper.selectById(x.getDeptId());
 			if (dept != null) {
@@ -186,6 +193,17 @@ public class UserServiceImpl extends BaseService<UserMapper, User> implements Us
 					.selectList(Wrappers.<UserPosition>lambdaQuery().eq(UserPosition::getUserId, x.getId()))));
 			return userView;
 		}).collect(Collectors.toList()));
+	}
+
+	/**
+	 * PRD-04：是否具备查看明文 PII 权限（user:view-plain，本人详情始终可看）
+	 */
+	private boolean hasPlainAuthority() {
+		UserInfo current = SecurityContextUtils.getUser();
+		if (current == null || current.getAuthorities() == null) {
+			return false;
+		}
+		return current.getAuthorities().stream().anyMatch(a -> "user:view-plain".equals(a.getAuthority()));
 	}
 
 	private List<String> getChildOrgIds(String parentOrgId) {
