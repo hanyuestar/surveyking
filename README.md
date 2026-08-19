@@ -7,15 +7,32 @@
     <img src='https://img.shields.io/badge/AI-Powered-brightgreen' alt='AI Powered'></img>
     <img src='https://img.shields.io/badge/license-MIT-blue' alt='License'></img>
     <img src='https://img.shields.io/badge/platform-Web%20%7C%20Mobile-lightgrey' alt='Platform'></img>
-    <img src='https://img.shields.io/badge/version-v1.0.8-blue' alt='Version'></img>
+    <img src='https://img.shields.io/badge/version-v1.0.9-blue' alt='Version'></img>
 </p>
 
-> **Fork 维护版 v1.0.8**：本项目为 [SurveyKing](https://github.com/javahuang/surveyking) 的分支维护版本（hanyuestar/surveyking），
+> **Fork 维护版 v1.0.9**：本项目为 [SurveyKing](https://github.com/javahuang/surveyking) 的分支维护版本（hanyuestar/surveyking），
 > 基于上游开源项目二次开发，保留上游核心作者 javahuang 署名与许可声明。
 
 ## 更新日志
 
 > 镜像同时发布到 Docker Hub（`kyson666/surveyking`）与 ghcr.io（`hanyuestar/surveyking`）。
+
+### v1.0.9（2026-08-19）
+
+> 企业级功能大版本：12 项企业级 PRD 全部落地（审计 / 部门权限 / SSO / PII 加密 / 分发催办 / 交叉分析 / 防作弊 / 规模化基座 / 开放集成 / 发布审批 / 多租户 / 智能分析）。
+
+- **审计日志中心**：操作审计 + 登录日志（含登录失败锁定 5 次/15 分钟），支持 Excel 导出；审计写入异步化不阻塞业务，日志按保留期自动清理。
+- **部门级数据权限**：按岗位数据权限类型（本人 / 本部门 / 部门及子部门 / 全量）控制问卷可见范围，成员变动自动生效。
+- **SSO / 目录集成**：认证方式抽象（LDAP / OIDC / 企微 / 钉钉 / 飞书），LDAP 零依赖实现（JNDI），登录方式可配置启用。
+- **PII 加密与脱敏**：AES-GCM 加密工具 + 手机号 / 邮箱 / 身份证脱敏，用户列表默认脱敏、仅授权角色可见明文。
+- **主动分发与催办**：按部门 / 角色 / 指定人活引用下发，未答名单实时计算，截止前 N 天与逾期自动提醒。
+- **交叉分析与可定制看板**：统计支持按部门 / 角色 / 岗位分组，自定义看板可保存，报表支持真实 PDF 导出。
+- **服务端防作弊与补考**：提交时服务端校验截止 / 超时 / 切屏超限标记，补考批次与次数配额服务端计数。
+- **规模化基座**：存储类型可切 MinIO / S3，缓存类型预留 Redis，提供多实例横向扩展编排。
+- **开放集成**：Webhook 事件订阅（HMAC 签名投递、失败留痕）、API Key 开放接口（仅存哈希、可吊销）。
+- **发布审批流**：问卷 / 考试发布审批（可开关，关闭时保持直接发布行为），审批留痕审计。
+- **多租户**：租户管理 + 租户上下文隔离（请求头 / 子域名解析），平台侧配额与用量接口。
+- **智能分析**：NPS 满意度指数、组间差异显著性检验（Welch t-test）。
 
 ### v1.0.8（2026-08-17）
 
@@ -175,6 +192,20 @@ docker run -d -p 1991:1991 kyson666/surveyking
 - 👥 **协作与权限** - 多人协作管理、完善的 RBAC 权限控制、组织架构管理
 - 💾 **数据库兼容** - 支持 MySQL、H2 等主流关系型数据库
 - 🔒 **企业级安全** - 安全、可靠、稳定的后端架构，支持高并发场景
+
+### 🏢 企业级功能（v1.0.9 起）
+
+- 🛡️ **审计日志中心** - 操作审计 + 登录日志 + 失败锁定，Excel 导出，异步写入与自动清理
+- 🏷️ **部门数据权限** - 按岗位数据权限类型（本人 / 部门 / 部门及子部门 / 全量）隔离问卷数据
+- 🔑 **SSO 与目录集成** - LDAP / OIDC / 企微 / 钉钉 / 飞书认证方式抽象，登录方式可配
+- 🔐 **PII 加密脱敏** - AES-GCM 加密 + 手机 / 邮箱 / 身份证脱敏，按权限返回明文
+- 📣 **主动分发与催办** - 部门 / 角色活引用下发，未答名单实时计算，截止前 / 逾期自动提醒
+- 📊 **交叉分析与看板** - 按部门 / 角色 / 岗位分组统计，自定义看板保存，真实 PDF 报表
+- 🎓 **防作弊与补考** - 服务端时效 / 切屏校验，补考批次服务端计数
+- 🧩 **开放集成** - Webhook 事件订阅（HMAC 签名）、API Key 开放接口
+- ✅ **发布审批流** - 问卷发布审批（可开关），审计留痕
+- 🏢 **多租户** - 租户管理与请求级隔离，平台侧配额
+- 📈 **智能分析** - NPS 满意度、组间显著性检验（Welch t-test）
 
 ### 🧠 高级逻辑引擎（业界领先）
 
