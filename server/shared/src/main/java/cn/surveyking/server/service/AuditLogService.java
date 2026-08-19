@@ -73,4 +73,9 @@ public interface AuditLogService {
 	 */
 	void assertNotLocked(String username);
 
+	/**
+	 * 清理超过保留期的操作/登录日志（@Scheduled 每日执行，sk.audit.retention-days<=0 不清理）
+	 */
+	void cleanupExpiredLogs();
+
 }

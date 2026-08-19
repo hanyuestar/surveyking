@@ -1,5 +1,6 @@
 package cn.surveyking.server.impl;
 
+import cn.surveyking.server.core.component.AuditLogWriter;
 import cn.surveyking.server.core.common.PaginationResponse;
 import cn.surveyking.server.core.config.AuditProperties;
 import cn.surveyking.server.core.constant.ErrorCode;
@@ -52,11 +53,14 @@ public class AuditLogServiceImpl extends BaseService<AuditLogMapper, AuditLog> i
 
 	private final AuditProperties auditProperties;
 
+	private final AuditLogWriter auditLogWriter;
+
 	@Override
 	public void record(AuditLogRequest request) {
 		if (!auditProperties.isEnabled() || request == null) {
 			return;
 		}
+		// 请求线程内捕获上下文，异步落库（遗留项：审计写入异步化，不阻塞主流程）
 		AuditLog auditLog = new AuditLog();
 		auditLog.setUserId(SecurityContextUtils.getUserId());
 		String username = SecurityContextUtils.getUsername();
@@ -69,13 +73,7 @@ public class AuditLogServiceImpl extends BaseService<AuditLogMapper, AuditLog> i
 		auditLog.setDetail(request.getDetail());
 		auditLog.setResult(request.getResult());
 		auditLog.setCreateAt(new Date());
-		try {
-			auditLogMapper.insert(auditLog);
-		}
-		catch (Exception ex) {
-			// 审计写入失败不影响业务主流程
-			log.warn("audit log write failed: {}", ex.getMessage());
-		}
+		auditLogWriter.writeAuditLog(auditLog);
 	}
 
 	private String currentIp() {
@@ -269,6 +267,29 @@ public class AuditLogServiceImpl extends BaseService<AuditLogMapper, AuditLog> i
 		AccountLock lock = accountLockMapper.selectById(username);
 		if (lock != null && lock.getLockedUntil() != null && lock.getLockedUntil().after(new Date())) {
 			throw new ErrorCodeException(ErrorCode.AccountLocked);
+		}
+	}
+
+	/**
+	 * 遗留项：日志保留策略——每天凌晨按 sk.audit.retention-days 清理过期操作/登录日志。
+	 * retention-days <= 0 不清理；清理失败仅告警不影响调度。
+	 */
+	@Override
+	@org.springframework.scheduling.annotation.Scheduled(cron = "0 30 2 * * *")
+	public void cleanupExpiredLogs() {
+		if (!auditProperties.isEnabled() || auditProperties.getRetentionDays() <= 0) {
+			return;
+		}
+		try {
+			Date cutoff = new Date(System.currentTimeMillis() - auditProperties.getRetentionDays() * 24 * 3600 * 1000L);
+			int auditRemoved = auditLogMapper.delete(Wrappers.<AuditLog>lambdaQuery().lt(AuditLog::getCreateAt, cutoff));
+			int loginRemoved = loginLogMapper
+					.delete(Wrappers.<cn.surveyking.server.domain.model.LoginLog>lambdaQuery().lt(cn.surveyking.server.domain.model.LoginLog::getCreateAt, cutoff));
+			log.info("audit log cleanup done: audit={}, login={}, cutoff={}", auditRemoved, loginRemoved,
+					cutoff);
+		}
+		catch (Exception ex) {
+			log.warn("audit log cleanup failed: {}", ex.getMessage());
 		}
 	}
 
